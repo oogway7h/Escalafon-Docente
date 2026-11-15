@@ -1,0 +1,654 @@
+{
+  "info": {
+    "name": "Pruebas de servicios — Escalafón",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Preparación",
+      "item": [
+        {
+          "name": "S1 login analista",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"tokenAnalista\", pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"correo\":\"analista@ded.dev\",\"contrasena\":\"123123\"}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "S2 login archivo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"tokenArchivo\", pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"correo\":\"archivo@ded.dev\",\"contrasena\":\"123123\"}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "S3 login ventanilla",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"tokenVentanilla\", pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"correo\":\"ventanilla@ded.dev\",\"contrasena\":\"123123\"}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "S4 docente y categoría para radicar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"docenteId\", pm.response.json().datos[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenVentanilla}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/docentes?buscar=5948&pagina=1&tamano=5"
+          }
+        },
+        {
+          "name": "S5 categoría activa",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"categoriaId\", pm.response.json()[0].id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/publico/categorias"
+          }
+        },
+        {
+          "name": "S6 trámite abierto del analista",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const t = pm.response.json().find(x => ![\"REMITIDO\",\"ARCHIVADO\"].includes(x.estado));",
+                  "pm.collectionVariables.set(\"tramiteAnalista\", t.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAnalista}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/tramites?mios=true"
+          }
+        },
+        {
+          "name": "S7 analista solicita una carpeta (sin trámite)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"solicitudId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAnalista}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"motivo\":\"Prueba de servicios: carpeta para el caso de legajo prestado\"}"
+            },
+            "url": "{{baseUrl}}/api/legajos/2397/solicitudes"
+          }
+        },
+        {
+          "name": "S8 archivo despacha la carpeta (queda Prestado)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"fechaLimite\", new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenArchivo}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fechaLimite\":\"{{fechaLimite}}\",\"estadoMaterial\":\"BUENO\",\"observacion\":\"Prueba de servicios\"}"
+            },
+            "url": "{{baseUrl}}/api/solicitudes-carpeta/{{solicitudId}}/entregar"
+          }
+        },
+        {
+          "name": "S9 bitácora: total antes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"bitacoraAntes\", pm.response.json().total);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenArchivo}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/custodia/bitacora?pagina=1&tamano=1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pruebas",
+      "item": [
+        {
+          "name": "1 Iniciar sesión con credenciales correctas (CU-01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Incluye token y el menú del rol (permisos)\", () => { const b = pm.response.json(); pm.expect(b.token).to.be.a(\"string\").and.not.empty; pm.expect(b.permisos).to.be.an(\"array\").that.is.not.empty; });",
+                  "pm.test(\"Responde en menos de 1.000 ms\", () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+                  "pm.collectionVariables.set(\"tokenAdmin\", pm.response.json().token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"correo\":\"admin@ded.dev\",\"contrasena\":\"123123\"}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "2 Iniciar sesión con contraseña incorrecta (CU-01)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado 401\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Mensaje genérico (no revela si el correo existe ni si la cuenta está bloqueada)\", () => { const b = pm.response.json(); pm.expect(b.codigo).to.eql(\"CREDENCIALES_INVALIDAS\"); pm.expect(String(b.mensaje)).to.not.match(/no existe|bloquead|inactiv/i); });",
+                  "pm.test(\"No incluye token\", () => pm.expect(pm.response.json()).to.not.have.property(\"token\"));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"correo\":\"analista@ded.dev\",\"contrasena\":\"contraseña-equivocada\"}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "3 Radicar un trámite sin token (CU-08)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.body.raw = JSON.stringify({ docenteId: pm.collectionVariables.get(\"docenteId\"), tipo: \"CATEGORIZACION\", categoriaId: Number(pm.collectionVariables.get(\"categoriaId\")) });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado 401: se rechaza sin autenticación\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"docenteId\":\"{{docenteId}}\",\"tipo\":\"CATEGORIZACION\",\"categoriaId\":\"{{categoriaId}}\"}"
+            },
+            "url": "{{baseUrl}}/api/tramites"
+          }
+        },
+        {
+          "name": "4 Radicar un trámite con el rol Analista (CU-08)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.body.raw = JSON.stringify({ docenteId: pm.collectionVariables.get(\"docenteId\"), tipo: \"CATEGORIZACION\", categoriaId: Number(pm.collectionVariables.get(\"categoriaId\")) });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado 403: el rol no tiene el permiso\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAnalista}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"docenteId\":\"{{docenteId}}\",\"tipo\":\"CATEGORIZACION\",\"categoriaId\":\"{{categoriaId}}\"}"
+            },
+            "url": "{{baseUrl}}/api/tramites"
+          }
+        },
+        {
+          "name": "5 Radicar un trámite con el rol Ventanilla (CU-08)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.body.raw = JSON.stringify({ docenteId: pm.collectionVariables.get(\"docenteId\"), tipo: \"CATEGORIZACION\", categoriaId: Number(pm.collectionVariables.get(\"categoriaId\")) });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado de creado (201)\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Incluye el código de seguimiento\", () => { const c = pm.response.json().codigo; pm.expect(c).to.match(/^ED-\\d{4}-[A-Z0-9]{6}$/); pm.collectionVariables.set(\"codigoTramite\", c); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenVentanilla}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"docenteId\":\"{{docenteId}}\",\"tipo\":\"CATEGORIZACION\",\"categoriaId\":\"{{categoriaId}}\"}"
+            },
+            "url": "{{baseUrl}}/api/tramites"
+          }
+        },
+        {
+          "name": "6 Consultar un trámite por código en el portal público (CU-12)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado 200 sin token\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"No incluye cédula ni correo\", () => pm.expect(pm.response.text()).to.not.match(/cedula|correo/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/publico/tramites/{{codigoTramite}}"
+          }
+        },
+        {
+          "name": "7 Consultar un código inexistente (CU-12)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado 404\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"Mensaje genérico\", () => pm.expect(String(pm.response.json().mensaje)).to.not.match(/docente|cédula|cedula|correo/i));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/publico/tramites/ED-2026-NOEXIS"
+          }
+        },
+        {
+          "name": "8 Cargar un archivo de formato no permitido (CU-15)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado de rechazo 400\", () => pm.response.to.have.status(400));",
+                  "pm.test(\"Se rechaza con TIPO_NO_PERMITIDO (4xx)\", () => { pm.expect(pm.response.code).to.be.within(400, 499); pm.expect(pm.response.json().codigo).to.eql(\"TIPO_NO_PERMITIDO\"); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAnalista}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nombre\":\"malicioso.html\",\"tipoMime\":\"text/html\",\"tamano\":1024}"
+            },
+            "url": "{{baseUrl}}/api/tramites/{{tramiteAnalista}}/documentos/subida"
+          }
+        },
+        {
+          "name": "9 Buscar documentación por contenido (CU-18)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Responde en menos de 1 segundo\", () => pm.expect(pm.response.responseTime).to.be.below(1000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenArchivo}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/documentos/buscar?q=maestria"
+          }
+        },
+        {
+          "name": "10 Despachar una carpeta con legajo ya prestado (CU-22)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.body.raw = JSON.stringify({ fechaLimite: pm.collectionVariables.get(\"fechaLimite\"), estadoMaterial: \"BUENO\" });"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado de conflicto o rechazo (400/409)\", () => pm.expect(pm.response.code).to.be.oneOf([400, 409]));",
+                  "pm.collectionVariables.set(\"estadoDespacho\", pm.response.code);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenArchivo}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fechaLimite\":\"{{fechaLimite}}\",\"estadoMaterial\":\"BUENO\"}"
+            },
+            "url": "{{baseUrl}}/api/solicitudes-carpeta/{{solicitudId}}/despachar"
+          }
+        },
+        {
+          "name": "10b Bitácora después del intento (verifica que no cambió)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"La bitácora no cambia\", () => pm.expect(pm.response.json().total).to.eql(Number(pm.collectionVariables.get(\"bitacoraAntes\"))));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenArchivo}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/custodia/bitacora?pagina=1&tamano=1"
+          }
+        },
+        {
+          "name": "11 Intentar eliminar una entrada de la bitácora (CU-24)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Estado 403: operación no permitida\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenAdmin}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/custodia/bitacora/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Limpieza",
+      "item": [
+        {
+          "name": "L1 devolver la carpeta de prueba",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tokenArchivo}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"estadoMaterial\":\"BUENO\",\"observacion\":\"Restitución tras la prueba de servicios\"}"
+            },
+            "url": "{{baseUrl}}/api/legajos/2397/devolver"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "127.0.0.1:6379:6379" # solo esta máquina: Redis no lleva contraseña
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+  postgres-test:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: escalafon_test
+    ports:
+      - "127.0.0.1:5433:5432"
+
+  # OCR (Tesseract) y compresion de PDF para CU-15. Lee y escribe en S3 con las credenciales de ia-service/.env.
+  ia-service:
+    build: ./ia-service
+    env_file: ./ia-service/.env
+    ports:
+      - "127.0.0.1:8000:8000"

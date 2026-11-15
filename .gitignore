@@ -1,0 +1,35 @@
+# --- Secretos y datos sensibles (nunca al repositorio) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.csv
+ded-backend_accessKeys.csv
+backend/reporte-importacion.txt
+
+# --- Proyectos y carpetas que no se suben ---
+/TSU-Dev/
+/ded_Mobile/
+/docs/
+/archivos/
+/impruves.md
+/CLAUDE.md
+.claude/settings.local.json
+
+# --- Repos individuales de cada subproyecto (sus .git se renombraron a .git.anidado) ---
+.git.anidado/
+**/.git.anidado/
+
+# --- Artefactos de compilación y dependencias ---
+node_modules/
+.next/
+frontend/next-env.d.ts
+backend/tmp/
+backend/bin/
+*.exe
+__pycache__/
+*.pyc
+.venv/
+*.log
+.DS_Store

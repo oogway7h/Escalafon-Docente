@@ -1,0 +1,222 @@
+@import "tailwindcss";
+
+/* dark: aplica cuando <html> tiene la clase "dark" (la pone BotonTema / el script de app/layout.tsx). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-ink: #0f1b2e;
+  /* Escala de texto secundario: los dos niveles pasan 4.5:1 sobre --color-bg y
+     --color-surface (ink-soft 6.7:1, ink-faint 4.7:1). ink-faint es el piso legible. */
+  --color-ink-soft: #4e5668;
+  --color-ink-faint: #676f83;
+  --color-line: #e1e4ea;
+  --color-sidebar: #0f1e36;
+  --color-sidebar-2: #152a4a;
+  /* accent = relleno de marca (lleva texto blanco encima); accent-ink = el acento COMO texto.
+     Un solo valor no cumple las dos funciones en modo oscuro, por eso se separan. */
+  --color-accent: #c8102e;
+  --color-accent-ink: #c8102e;
+  --color-accent-dark: #ad0e28;
+  --color-accent-soft: #fbe9eb;
+  --color-success: #15744c;
+  /* Barras del tablero (una sola serie): validado contra la superficie de cada modo. */
+  --color-grafico: #2c5aa0;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-bg: #0b1220;
+  --color-surface: #131c2e;
+  --color-ink: #e6e9ef;
+  --color-ink-soft: #a3abbd;
+  --color-ink-faint: #7e879c;
+  --color-line: #26324a;
+  --color-sidebar: #070e1c;
+  --color-sidebar-2: #0f1d35;
+  --color-accent: #d42740;
+  --color-accent-ink: #ff8293;
+  --color-accent-dark: #c8102e;
+  --color-accent-soft: #3a1a25;
+  --color-success: #3fb981;
+  --color-grafico: #6a96d8;
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-ink: var(--color-ink);
+  --color-ink-soft: var(--color-ink-soft);
+  --color-ink-faint: var(--color-ink-faint);
+  --color-line: var(--color-line);
+  --color-sidebar: var(--color-sidebar);
+  --color-sidebar-2: var(--color-sidebar-2);
+  --color-accent: var(--color-accent);
+  --color-accent-ink: var(--color-accent-ink);
+  --color-accent-dark: var(--color-accent-dark);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-success: var(--color-success);
+  --color-grafico: var(--color-grafico);
+  --font-display: var(--font-manrope), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-body: var(--font-source-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  /* Cifras de ancho fijo: las columnas de fechas, montos y contadores no bailan al paginar. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Superficies del navegador ---
+   Lo que no dibujamos también es parte del diseño: foco, selección, cursor de texto y barra de
+   desplazamiento vienen con los valores del navegador y no pertenecen a ningún sistema. */
+:root {
+  accent-color: var(--color-accent);
+  caret-color: var(--color-accent-ink);
+  scrollbar-color: var(--color-line) transparent;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  color: var(--color-ink);
+}
+
+/* Un solo anillo de foco para todo lo que se puede tabular. Antes solo lo tenían los <input>:
+   botones, enlaces y filas de tabla no mostraban nada al navegar con teclado. */
+:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: 2px;
+}
+
+/* Sobre las superficies navy (barra lateral, panel de autenticación) el rojo no se ve: ahí el
+   anillo es blanco. */
+aside :focus-visible,
+.sobre-oscuro :focus-visible {
+  outline-color: rgba(255, 255, 255, 0.92);
+}
+
+/* Campos dentro de una barra que ya marca el foco en su contorno (BuscadorSugerencias): sin esto se
+   veía un segundo rectángulo dentro de la barra. */
+[data-foco-en-contenedor]:focus-visible {
+  outline: none;
+}
+
+a {
+  text-underline-offset: 0.18em;
+}
+
+/* --- Esqueleto de carga ---
+   Barra que ocupa el sitio del dato que aún no llegó. Parpadea entre dos niveles del propio
+   tema (no un gris fijo), así funciona igual en claro y en oscuro. */
+@keyframes esqueleto-latido {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.esqueleto {
+  background: color-mix(in srgb, var(--color-ink-faint) 24%, transparent);
+  animation: esqueleto-latido 1.4s ease-in-out infinite;
+}
+
+/* Sin movimiento: la barra se queda fija. Sigue comunicando la forma de lo que viene. */
+@media (prefers-reduced-motion: reduce) {
+  .esqueleto { animation: none; }
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Loader: un anillo que gira. */
+@keyframes girar {
+  to { transform: rotate(360deg); }
+}
+
+.animate-girar {
+  animation: girar 0.8s linear infinite;
+}
+
+/* --- Materiales (portal público y trámites) ---
+   Superficie translúcida: el contenido se ve a través, el blur mantiene la legibilidad. */
+.material {
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid color-mix(in srgb, var(--color-line) 70%, transparent);
+}
+
+/* El resultado "se materializa": desenfoque, escala y opacidad llegan juntos. */
+@keyframes materializar {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); filter: blur(8px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+
+.animate-materializar {
+  animation: materializar 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-materializar { animation: materializar-suave 200ms ease both; }
+  .animate-girar { animation-duration: 2.4s; }
+}
+
+@keyframes materializar-suave {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .material { background: var(--color-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+@media (prefers-contrast: more) {
+  .material { background: var(--color-surface); border-color: var(--color-ink-soft); }
+}
+
+/* Fade al hacer scroll (pantalla de inicio): cada bloque aparece al entrar por abajo y se desvanece al salir por arriba;
+   al subir ocurre al revés. Va ligado al scroll con animation-timeline; donde no existe, todo se ve normal. */
+@supports (animation-timeline: view()) {
+  .fade-scroll, .fade-izq, .fade-der, .fade-salida {
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: view();
+  }
+  .fade-scroll { animation-name: pasa-vertical; animation-range: cover 0% cover 100%; }
+  .fade-izq { animation-name: pasa-izquierda; animation-range: cover 0% cover 100%; }
+  .fade-der { animation-name: pasa-derecha; animation-range: cover 0% cover 100%; }
+  .fade-salida { animation-name: sale-arriba; animation-range: exit 10% exit 70%; }
+}
+
+@keyframes pasa-vertical {
+  0% { opacity: 0; transform: translateY(28px); }
+  22%, 78% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-28px); }
+}
+
+@keyframes pasa-izquierda {
+  0% { opacity: 0; transform: translateX(-28px); }
+  22%, 78% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateX(-28px); }
+}
+
+@keyframes pasa-derecha {
+  0% { opacity: 0; transform: translateX(28px); }
+  22%, 78% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateX(28px); }
+}
+
+@keyframes sale-arriba {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-24px) scale(0.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-scroll, .fade-izq, .fade-der, .fade-salida { animation: none; opacity: 1; transform: none; }
+}

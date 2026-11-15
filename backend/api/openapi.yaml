@@ -1,0 +1,952 @@
+openapi: 3.0.3
+info:
+  title: Escalafón Docente UAGRM — API de Seguridad
+  description: >
+    HU-01 (Acceso y Gestión de Credenciales), HU-02 (Administración de Usuarios,
+    Roles y Permisos), HU-03 (Consulta de auditoría, CU-06), legajos y custodia
+    (CU-19 a CU-24), notificaciones al docente (CU-14), tablero de indicadores (CU-25)
+    y reportes (CU-26). Los módulos de docentes y trámites (CU-07 a CU-13) aún no están
+    descritos aquí.
+  version: "1.0.0"
+servers:
+  - url: /api
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        codigo: { type: string, example: CREDENCIALES_INVALIDAS }
+        mensaje: { type: string }
+        detalles: { type: object, nullable: true }
+    UsuarioResumen:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        nombres: { type: string }
+        apellidos: { type: string }
+        correo: { type: string, format: email }
+        rolId: { type: integer }
+    Usuario:
+      allOf:
+        - $ref: '#/components/schemas/UsuarioResumen'
+        - type: object
+          properties:
+            telefono: { type: string }
+            activo: { type: boolean }
+    Permiso:
+      type: object
+      properties:
+        id: { type: integer }
+        codigo: { type: string }
+        nombre: { type: string }
+        modulo: { type: string }
+        casoUso: { type: string }
+    Rol:
+      type: object
+      properties:
+        id: { type: integer }
+        nombre: { type: string }
+        descripcion: { type: string }
+        esSistema: { type: boolean }
+        activo: { type: boolean }
+        usuariosCount: { type: integer }
+    AutorAuditoria:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        nombres: { type: string }
+        apellidos: { type: string }
+        correo: { type: string, format: email }
+    RegistroAuditoria:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        fecha: { type: string, format: date-time }
+        usuario:
+          allOf: [{ $ref: '#/components/schemas/AutorAuditoria' }]
+          nullable: true
+          description: null si la acción no tuvo usuario (login con correo inexistente, solicitud del portal)
+        accion: { type: string, example: LOGIN }
+        entidad: { type: string, example: usuario }
+        entidadId: { type: string, description: Puede estar vacío }
+        detalle: { type: object, nullable: true, description: Datos adicionales de la acción (sin contraseñas ni tokens) }
+        direccionIp: { type: string, description: Solo en LOGIN y LOGIN_FALLIDO; vacío en el resto }
+
+security:
+  - bearerAuth: []
+
+    Pagina:
+      type: object
+      properties:
+        total: { type: integer }
+        pagina: { type: integer }
+        tamano: { type: integer }
+    Carpeta:
+      type: object
+      properties:
+        id: { type: integer }
+        codigo: { type: string, example: LEG-00012 }
+        docenteId: { type: string, format: uuid }
+        docenteCodigo: { type: string }
+        docenteNombre: { type: string }
+        gaveta: { type: string }
+        orden: { type: integer }
+        anexos: { type: string }
+        observacion: { type: string }
+        estado: { type: string, enum: [EN_ARCHIVO, PRESTADO] }
+    SolicitudCarpeta:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        legajoId: { type: integer }
+        legajoCodigo: { type: string }
+        docenteNombre: { type: string }
+        solicitante: { type: string }
+        motivo: { type: string }
+        estado: { type: string, enum: [PENDIENTE, ATENDIDA, RECHAZADA, DESPACHADA, DEVUELTA] }
+        respuesta: { type: string }
+        creadoEn: { type: string, format: date-time }
+        atendidoEn: { type: string, format: date-time, nullable: true }
+        fechaLimite: { type: string, format: date, nullable: true }
+    MovimientoCustodia:
+      type: object
+      properties:
+        id: { type: integer }
+        legajoCodigo: { type: string }
+        docenteNombre: { type: string }
+        tipo: { type: string, enum: [SALIDA, ENTRADA] }
+        custodio: { type: string }
+        fechaLimite: { type: string, format: date, nullable: true }
+        estadoMaterial: { type: string, enum: [BUENO, REGULAR, DETERIORADO] }
+        observacion: { type: string }
+        evidenciaUrl: { type: string, description: 'Enlace temporal (15 min) a la foto de la devolución; vacío si no hay' }
+        registradoPor: { type: string }
+        fecha: { type: string, format: date-time }
+        vencido: { type: boolean, description: 'Salida cuya carpeta sigue prestada pasada la fecha límite' }
+    Notificacion:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        tramiteCodigo: { type: string }
+        estadoTramite: { type: string, enum: [OBSERVADO, EN_FACULTAD, REMITIDO, ARCHIVADO] }
+        destino: { type: string }
+        estado: { type: string, enum: [PENDIENTE, ENVIADO, FALLIDO] }
+        intentos: { type: integer }
+        error: { type: string }
+        creadoEn: { type: string, format: date-time }
+        enviadoEn: { type: string, format: date-time, nullable: true }
+    Tablero:
+      type: object
+      properties:
+        generadoEn: { type: string, format: date-time }
+        periodo:
+          type: object
+          properties:
+            desde: { type: string, format: date, nullable: true }
+            hasta: { type: string, format: date, nullable: true }
+        diasMaximosPrestamo: { type: integer, description: 'Umbral de mora (DIAS_MAXIMOS_PRESTAMO, 15 por defecto)' }
+        tramites:
+          type: object
+          properties:
+            radicados: { type: integer, description: Radicados en el periodo }
+            enCurso: { type: integer, description: 'De esos, los que no están REMITIDO ni ARCHIVADO' }
+            resueltos: { type: integer, description: 'Remitidos en el periodo (o archivados, en datos anteriores al flujo actual)' }
+            promedioDias: { type: number }
+        porEstado:
+          type: array
+          description: Los nueve estados en el orden del flujo, con 0 si no hay trámites
+          items:
+            type: object
+            properties:
+              estado: { type: string }
+              cantidad: { type: integer }
+        tiempos:
+          type: array
+          items:
+            type: object
+            properties:
+              tipo: { type: string, enum: [CATEGORIZACION, REGULARIZACION] }
+              categoria: { type: string }
+              cantidad: { type: integer }
+              promedioDias: { type: number }
+              minimoDias: { type: number }
+              maximoDias: { type: number }
+        analistas:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              nombre: { type: string }
+              activos: { type: integer, description: Carga vigente (hoy) }
+              enFacultad: { type: integer }
+              resueltos: { type: integer, description: Resueltos en el periodo }
+        prestamosVigentes: { type: integer }
+        alertas:
+          type: array
+          description: Carpetas en mora, la de más días primero
+          items:
+            type: object
+            properties:
+              legajoCodigo: { type: string }
+              docenteNombre: { type: string }
+              custodio: { type: string }
+              tramiteCodigo: { type: string }
+              salida: { type: string, format: date-time }
+              fechaLimite: { type: string, format: date, nullable: true }
+              diasPrestado: { type: integer }
+              diasMora: { type: integer }
+              motivo: { type: string, enum: [FECHA_LIMITE_VENCIDA, EXCEDE_MAXIMO] }
+
+paths:
+  /auth/login:
+    post:
+      summary: Autenticar usuario
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo, contrasena]
+              properties:
+                correo: { type: string, format: email }
+                contrasena: { type: string }
+      responses:
+        '200':
+          description: Autenticado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token: { type: string }
+                  expiraEn: { type: integer }
+                  usuario: { $ref: '#/components/schemas/UsuarioResumen' }
+                  permisos: { type: array, items: { type: string } }
+        '401': { description: CREDENCIALES_INVALIDAS, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '423': { description: CUENTA_BLOQUEADA, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+        '422': { description: VALIDACION, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /auth/recuperacion:
+    post:
+      summary: Solicitar recuperación de contraseña
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo]
+              properties: { correo: { type: string, format: email } }
+      responses:
+        '202': { description: Siempre, exista o no el correo }
+
+  /auth/restablecer:
+    post:
+      summary: Restablecer contraseña con token de recuperación
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, nueva]
+              properties: { token: { type: string }, nueva: { type: string } }
+      responses:
+        '200': { description: OK }
+        '400': { description: TOKEN_INVALIDO }
+        '422': { description: POLITICA_CONTRASENA }
+
+  /auth/activar:
+    post:
+      summary: Activar cuenta con token de activación
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, nueva]
+              properties: { token: { type: string }, nueva: { type: string } }
+      responses:
+        '200': { description: OK }
+        '400': { description: TOKEN_INVALIDO }
+        '422': { description: POLITICA_CONTRASENA }
+
+  /auth/logout:
+    post:
+      summary: Cerrar sesión (revoca el jti)
+      responses:
+        '204': { description: Sesión cerrada }
+
+  /auth/sesion:
+    get:
+      summary: Obtener la sesión vigente
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  usuario: { $ref: '#/components/schemas/UsuarioResumen' }
+                  rol: { type: string }
+                  permisos: { type: array, items: { type: string } }
+
+  /perfil:
+    get:
+      summary: Obtener mi perfil
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Usuario' } } } }
+    put:
+      summary: Actualizar mi contacto (solo teléfono)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [telefono]
+              properties: { telefono: { type: string } }
+      responses:
+        '200': { description: OK }
+        '403': { description: CAMPO_NO_EDITABLE }
+
+  /perfil/contrasena:
+    put:
+      summary: Cambiar mi contraseña
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [actual, nueva]
+              properties: { actual: { type: string }, nueva: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: { token: { type: string }, expiraEn: { type: integer } }
+        '422': { description: CONTRASENA_ACTUAL_INCORRECTA / POLITICA_CONTRASENA }
+
+  /usuarios:
+    get:
+      summary: Listar usuarios
+      parameters:
+        - { name: buscar, in: query, schema: { type: string } }
+        - { name: rolId, in: query, schema: { type: integer } }
+        - { name: activo, in: query, schema: { type: boolean } }
+        - { name: pagina, in: query, schema: { type: integer, default: 1 } }
+        - { name: tamano, in: query, schema: { type: integer, default: 20 } }
+      responses:
+        '200':
+          description: Página de usuarios
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datos: { type: array, items: { $ref: '#/components/schemas/Usuario' } }
+                  total: { type: integer }
+                  pagina: { type: integer }
+                  tamano: { type: integer }
+    post:
+      summary: Crear usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombres, apellidos, correo, rolId]
+              properties:
+                nombres: { type: string }
+                apellidos: { type: string }
+                correo: { type: string, format: email }
+                telefono: { type: string }
+                rolId: { type: integer }
+      responses:
+        '201': { description: Creado, content: { application/json: { schema: { $ref: '#/components/schemas/Usuario' } } } }
+        '409': { description: CORREO_DUPLICADO }
+        '422': { description: ROL_INVALIDO }
+
+  /usuarios/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    get:
+      summary: Obtener usuario
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Usuario' } } } }
+        '404': { description: NO_ENCONTRADO }
+    put:
+      summary: Editar usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombres, apellidos, correo]
+              properties:
+                nombres: { type: string }
+                apellidos: { type: string }
+                correo: { type: string, format: email }
+                telefono: { type: string }
+      responses:
+        '200': { description: OK }
+        '409': { description: CORREO_DUPLICADO }
+
+  /usuarios/{id}/rol:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    patch:
+      summary: Cambiar rol de un usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rolId]
+              properties: { rolId: { type: integer } }
+      responses:
+        '200': { description: OK }
+        '409': { description: AUTOCAMBIO_ROL }
+
+  /usuarios/{id}/estado:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    patch:
+      summary: Activar o desactivar (baja lógica) un usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [activo]
+              properties: { activo: { type: boolean } }
+      responses:
+        '200': { description: OK }
+        '409': { description: AUTODESACTIVACION }
+
+  /usuarios/{id}/reenviar-activacion:
+    parameters: [{ name: id, in: path, required: true, schema: { type: string } }]
+    post:
+      summary: Reenviar el correo de activación
+      responses:
+        '202': { description: Enviado }
+        '409': { description: CUENTA_YA_ACTIVADA }
+
+  /permisos:
+    get:
+      summary: Listar el catálogo de permisos
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Permiso' } }
+
+  /roles:
+    get:
+      summary: Listar roles con cantidad de usuarios
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Rol' } }
+    post:
+      summary: Crear rol
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre]
+              properties:
+                nombre: { type: string }
+                descripcion: { type: string }
+                permisoIds: { type: array, items: { type: integer } }
+      responses:
+        '201': { description: Creado }
+        '409': { description: ROL_DUPLICADO }
+        '422': { description: PERMISO_INVALIDO }
+
+  /roles/{id}:
+    parameters: [{ name: id, in: path, required: true, schema: { type: integer } }]
+    get:
+      summary: Obtener rol con sus permisos
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Rol' } } } }
+    put:
+      summary: Editar rol y reemplazar sus permisos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre]
+              properties:
+                nombre: { type: string }
+                descripcion: { type: string }
+                permisoIds: { type: array, items: { type: integer } }
+      responses:
+        '200': { description: OK }
+        '409': { description: ROL_DUPLICADO / ROL_SISTEMA_PROTEGIDO }
+    delete:
+      summary: Eliminar rol
+      responses:
+        '204': { description: Eliminado }
+        '409': { description: ROL_CON_USUARIOS / ROL_SISTEMA_PROTEGIDO }
+
+  /auditoria:
+    get:
+      summary: Consultar la bitácora de auditoría (CU-06, permiso AUDITORIA_CONSULTAR)
+      description: >
+        Solo lectura: no existen rutas que creen, modifiquen o eliminen registros, y la tabla
+        rechaza UPDATE/DELETE/TRUNCATE. Los filtros son opcionales y se combinan con AND.
+        Orden: fecha descendente (y id descendente). Las fechas se interpretan en hora de
+        Bolivia (UTC-4) y ambos extremos son inclusivos.
+      parameters:
+        - { name: usuarioId, in: query, schema: { type: string, format: uuid } }
+        - { name: accion, in: query, schema: { type: string }, description: 'Código del catálogo de /auditoria/filtros (no distingue mayúsculas)' }
+        - { name: desde, in: query, schema: { type: string, format: date }, description: AAAA-MM-DD }
+        - { name: hasta, in: query, schema: { type: string, format: date }, description: AAAA-MM-DD }
+        - { name: pagina, in: query, schema: { type: integer, default: 1 } }
+        - { name: tamano, in: query, schema: { type: integer, default: 20, maximum: 100 }, description: 'Fuera de 1..100 se usa 20' }
+      responses:
+        '200':
+          description: Página de registros
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datos: { type: array, items: { $ref: '#/components/schemas/RegistroAuditoria' } }
+                  total: { type: integer }
+                  pagina: { type: integer }
+                  tamano: { type: integer }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+        '422': { description: 'VALIDACION (fecha, usuarioId, pagina o tamano con formato inválido; detalles por parámetro) / ACCION_INVALIDA / RANGO_FECHAS_INVALIDO', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /auditoria/filtros:
+    get:
+      summary: Opciones de los filtros de auditoría (permiso AUDITORIA_CONSULTAR)
+      responses:
+        '200':
+          description: Catálogo de acciones y usuarios que figuran en la bitácora
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  acciones: { type: array, items: { type: string } }
+                  usuarios: { type: array, items: { $ref: '#/components/schemas/AutorAuditoria' } }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /legajos:
+    get:
+      summary: Inventario de legajos (CU-19; LEGAJO_GESTIONAR, CARPETA_SOLICITAR o CUSTODIA_REGISTRAR)
+      description: >
+        Si `buscar` contiene dígitos coincide EXACTO con el código del legajo, el código del docente o su
+        cédula; sin dígitos busca por fragmento del nombre.
+      parameters:
+        - { name: buscar, in: query, schema: { type: string } }
+        - { name: estado, in: query, schema: { type: string, enum: [EN_ARCHIVO, PRESTADO] } }
+        - { name: pagina, in: query, schema: { type: integer, default: 1 } }
+        - { name: tamano, in: query, schema: { type: integer, default: 10, maximum: 100 } }
+      responses:
+        '200':
+          description: Página de legajos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      datos: { type: array, items: { $ref: '#/components/schemas/Carpeta' } }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+    post:
+      summary: Registrar un legajo (CU-19; LEGAJO_GESTIONAR)
+      description: El código `LEG-NNNNN` se asigna solo si no se envía.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [docenteId]
+              properties:
+                docenteId: { type: string, format: uuid }
+                codigo: { type: string, maxLength: 20 }
+                gaveta: { type: string, maxLength: 10 }
+                orden: { type: integer }
+                anexos: { type: string, maxLength: 80 }
+                observacion: { type: string, maxLength: 200 }
+      responses:
+        '201': { description: Legajo creado, content: { application/json: { schema: { $ref: '#/components/schemas/Carpeta' } } } }
+        '409': { description: LEGAJO_CODIGO_DUPLICADO }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+        '422': { description: VALIDACION, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /legajos/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    get:
+      summary: Obtener un legajo (CU-19)
+      responses:
+        '200': { description: Legajo, content: { application/json: { schema: { $ref: '#/components/schemas/Carpeta' } } } }
+        '404': { description: LEGAJO_NO_ENCONTRADO }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+    put:
+      summary: Editar ubicación y código de un legajo (CU-19; LEGAJO_GESTIONAR). El estado solo lo cambian los movimientos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                codigo: { type: string }
+                gaveta: { type: string }
+                orden: { type: integer }
+                anexos: { type: string }
+                observacion: { type: string }
+      responses:
+        '200': { description: Legajo actualizado, content: { application/json: { schema: { $ref: '#/components/schemas/Carpeta' } } } }
+        '404': { description: LEGAJO_NO_ENCONTRADO }
+        '409': { description: LEGAJO_CODIGO_DUPLICADO }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+        '422': { description: VALIDACION, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /legajos/{id}/solicitudes:
+    post:
+      summary: Solicitar una carpeta física (CU-20; CARPETA_SOLICITAR)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [motivo], properties: { motivo: { type: string } } }
+      responses:
+        '201': { description: Solicitud PENDIENTE, content: { application/json: { schema: { $ref: '#/components/schemas/SolicitudCarpeta' } } } }
+        '409': { description: 'LEGAJO_NO_DISPONIBLE (ya está prestado) o SOLICITUD_ABIERTA (hay otra solicitud en curso)' }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+        '422': { description: VALIDACION, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+
+  /legajos/{id}/devolver:
+    post:
+      summary: Registrar la devolución de una carpeta (CU-23; CUSTODIA_REGISTRAR)
+      description: >
+        Acepta JSON o `multipart/form-data`. En multipart, el campo opcional `evidencia` es una foto
+        JPG o PNG de hasta 5 MB que se guarda en el almacenamiento de objetos (sin S3 configurado responde
+        503 ALMACEN_NO_DISPONIBLE). La carpeta vuelve a EN_ARCHIVO y se anexa una ENTRADA a la bitácora.
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estadoMaterial]
+              properties:
+                estadoMaterial: { type: string, enum: [BUENO, REGULAR, DETERIORADO] }
+                observacion: { type: string }
+          multipart/form-data:
+            schema:
+              type: object
+              required: [estadoMaterial]
+              properties:
+                estadoMaterial: { type: string, enum: [BUENO, REGULAR, DETERIORADO] }
+                observacion: { type: string }
+                evidencia: { type: string, format: binary }
+      responses:
+        '204': { description: Devuelta }
+        '409': { description: LEGAJO_NO_PRESTADO }
+        '422': { description: ESTADO_MATERIAL_INVALIDO / EVIDENCIA_INVALIDA / VALIDACION }
+        '503': { description: ALMACEN_NO_DISPONIBLE }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /solicitudes-carpeta:
+    get:
+      summary: Solicitudes de carpeta (CU-20, CU-21)
+      description: Quien solo tiene CARPETA_SOLICITAR ve únicamente sus propias solicitudes.
+      parameters:
+        - { name: estado, in: query, schema: { type: string, enum: [PENDIENTE, ATENDIDA, RECHAZADA, DESPACHADA, DEVUELTA] } }
+        - { name: pagina, in: query, schema: { type: integer, default: 1 } }
+        - { name: tamano, in: query, schema: { type: integer, default: 10, maximum: 100 } }
+      responses:
+        '200':
+          description: Página de solicitudes
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      datos: { type: array, items: { $ref: '#/components/schemas/SolicitudCarpeta' } }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /solicitudes-carpeta/{id}/atender:
+    post:
+      summary: Aprobar o rechazar una solicitud (CU-21; LEGAJO_GESTIONAR)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                aprobar: { type: boolean }
+                nota: { type: string, description: Obligatoria al rechazar }
+      responses:
+        '204': { description: Atendida o rechazada }
+        '409': { description: SOLICITUD_ESTADO_INVALIDO }
+        '422': { description: MOTIVO_REQUERIDO }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /solicitudes-carpeta/{id}/despachar:
+    post:
+      summary: Despachar la carpeta, check-out (CU-22; CUSTODIA_REGISTRAR)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fechaLimite, estadoMaterial]
+              properties:
+                fechaLimite: { type: string, format: date, description: Posterior a hoy }
+                estadoMaterial: { type: string, enum: [BUENO, REGULAR, DETERIORADO] }
+                observacion: { type: string }
+      responses:
+        '204': { description: Despachada; la carpeta queda PRESTADA }
+        '409': { description: SOLICITUD_ESTADO_INVALIDO / LEGAJO_NO_DISPONIBLE }
+        '422': { description: FECHA_LIMITE_INVALIDA / ESTADO_MATERIAL_INVALIDO }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /custodia/bitacora:
+    get:
+      summary: Bitácora de custodia, solo lectura (CU-24; BITACORA_CONSULTAR)
+      parameters:
+        - { name: buscar, in: query, schema: { type: string }, description: 'Con dígitos: código de legajo, de docente o cédula exactos' }
+        - { name: tipo, in: query, schema: { type: string, enum: [SALIDA, ENTRADA] } }
+        - { name: vencidos, in: query, schema: { type: boolean } }
+        - { name: pagina, in: query, schema: { type: integer, default: 1 } }
+        - { name: tamano, in: query, schema: { type: integer, default: 10, maximum: 100 } }
+      responses:
+        '200':
+          description: Página de movimientos (del más reciente al más antiguo)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      datos: { type: array, items: { $ref: '#/components/schemas/MovimientoCustodia' } }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /notificaciones:
+    get:
+      summary: Avisos de cambio de estado enviados a los docentes (CU-14; NOTIFICACION_CONSULTAR)
+      description: >
+        Se genera un aviso cuando un trámite pasa a OBSERVADO, EN_FACULTAD, REMITIDO o ARCHIVADO. Los envíos
+        fallidos se reintentan cada minuto hasta 3 intentos; un docente sin correo queda FALLIDO.
+      parameters:
+        - { name: estado, in: query, schema: { type: string, enum: [PENDIENTE, ENVIADO, FALLIDO] } }
+        - { name: pagina, in: query, schema: { type: integer, default: 1 } }
+        - { name: tamano, in: query, schema: { type: integer, default: 10, maximum: 100 } }
+      responses:
+        '200':
+          description: Página de avisos
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Pagina'
+                  - type: object
+                    properties:
+                      datos: { type: array, items: { $ref: '#/components/schemas/Notificacion' } }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /tablero:
+    get:
+      summary: Tablero de indicadores, solo lectura (CU-25; TABLERO_VER)
+      description: >
+        Se calcula en cada consulta. El periodo acota los trámites radicados (distribución por estado) y los
+        resueltos (tiempos y resueltos por analista); la carga vigente y las alertas de mora son las de hoy.
+        Una carpeta está en mora si pasó su fecha límite o lleva más de DIAS_MAXIMOS_PRESTAMO días fuera;
+        al registrar la devolución deja de estar prestada y la alerta desaparece.
+      parameters:
+        - { name: desde, in: query, schema: { type: string, format: date }, description: 'AAAA-MM-DD, día de Bolivia, inclusive' }
+        - { name: hasta, in: query, schema: { type: string, format: date }, description: 'AAAA-MM-DD, día de Bolivia, inclusive' }
+      responses:
+        '200':
+          description: Indicadores del periodo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tablero' }
+        '422': { description: VALIDACION (fecha mal formada) / RANGO_FECHAS_INVALIDO }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /reportes:
+    post:
+      summary: Genera y descarga un reporte en PDF o Excel (CU-26; REPORTE_GENERAR)
+      description: >
+        TRAMITES filtra por fecha de radicación, estado, tipo y categoría; TIEMPOS por fecha de resolución,
+        tipo y categoría; INVENTARIO por estado de la carpeta. El PDF lleva membrete institucional, fecha de
+        emisión y responsable; el Excel es una tabla con autofiltro. Cada emisión queda en la auditoría
+        (GENERAR_REPORTE con tipo, formato, filas y filtros).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tipo, formato]
+              properties:
+                tipo: { type: string, enum: [TRAMITES, INVENTARIO, TIEMPOS] }
+                formato: { type: string, enum: [PDF, XLSX] }
+                desde: { type: string, format: date }
+                hasta: { type: string, format: date }
+                estado: { type: string, description: Estado del trámite (solo TRAMITES) }
+                tipoTramite: { type: string, enum: [CATEGORIZACION, REGULARIZACION] }
+                categoriaId: { type: integer }
+                estadoLegajo: { type: string, enum: [EN_ARCHIVO, PRESTADO] }
+      responses:
+        '200':
+          description: El archivo, como adjunto (Content-Disposition); X-Reporte-Filas trae la cantidad de filas
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } }
+        '422': { description: VALIDACION / RANGO_FECHAS_INVALIDO / FILTRO_INVALIDO / REPORTE_VACIO (no hay datos para los filtros) }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /documentos/buscar:
+    get:
+      summary: Búsqueda documental global (CU-18; DOCUMENTO_BUSCAR)
+      description: >
+        Texto completo por página (sin tildes ni terminaciones) y/o docente sobre todos los documentos
+        activos, adjuntos de trámites y escaneos del expediente. Los dados de baja nunca aparecen. Agrupa
+        por documento con las páginas halladas y el mejor fragmento (palabras entre ⟦ ⟧).
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 2, maxLength: 100 } }
+        - name: campo
+          in: query
+          description: Vacío = contenido o docente; CONTENIDO = texto OCR (incluye n.º de resolución); DOCENTE = nombre, código o cédula (con dígitos, exacto)
+          schema: { type: string, enum: ['', CONTENIDO, DOCENTE] }
+        - { name: tipo, in: query, description: Tipo de escaneo del expediente, schema: { type: string } }
+        - { name: facultad, in: query, description: Facultad del docente, schema: { type: integer } }
+        - { name: orden, in: query, description: "recientes = los más nuevos primero; si no, por relevancia", schema: { type: string, enum: [recientes] } }
+        - { name: pagina, in: query, schema: { type: integer, default: 1 } }
+        - { name: tamano, in: query, schema: { type: integer, default: 10, maximum: 100 } }
+      responses:
+        '200':
+          description: '{datos, total, pagina, tamano}'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datos:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        documentoId: { type: string, format: uuid }
+                        tramiteId: { type: string, description: Vacío en los escaneos del expediente }
+                        tramiteCodigo: { type: string }
+                        tipoDocumento: { type: string }
+                        nombreOriginal: { type: string }
+                        docenteId: { type: string, format: uuid }
+                        docenteNombre: { type: string }
+                        docenteCodigo: { type: string }
+                        paginas: { type: array, items: { type: integer }, description: Vacío si solo coincide el docente }
+                        fragmento: { type: string }
+                  total: { type: integer }
+                  pagina: { type: integer }
+                  tamano: { type: integer }
+        '422': { description: CONSULTA_INVALIDA / TIPO_DOCUMENTO_INVALIDO }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /documentos/bajas:
+    get:
+      summary: Documentos dados de baja (CU-17; DOCUMENTO_RESTITUIR, Director)
+      parameters:
+        - { name: buscar, in: query, description: Docente (nombre, código o cédula), código de trámite o nombre del archivo, schema: { type: string } }
+        - { name: pagina, in: query, schema: { type: integer, default: 1 } }
+        - { name: tamano, in: query, schema: { type: integer, default: 10, maximum: 100 } }
+      responses:
+        '200':
+          description: '{datos, total, pagina, tamano}; cada dato es el documento con tramiteId, tramiteCodigo, tramiteEstado, docenteId, docenteNombre, docenteCodigo y bajaPorNombre'
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }
+
+  /documentos/{docId}/restituir:
+    post:
+      summary: Restituye un documento dado de baja (CU-17; DOCUMENTO_RESTITUIR, Director)
+      description: >
+        Lo reactiva y borra los datos de la baja; vuelve a las búsquedas sin reprocesar el OCR. Queda en la
+        auditoría como RESTITUIR_DOCUMENTO con ambos motivos. No aplica a trámites remitidos o archivados.
+      parameters:
+        - { name: docId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [motivo]
+              properties:
+                motivo: { type: string, minLength: 5, maxLength: 255 }
+      responses:
+        '204': { description: Restituido }
+        '404': { description: DOCUMENTO_NO_ENCONTRADO }
+        '409': { description: DOCUMENTO_ACTIVO (no estaba de baja) / TRAMITE_ARCHIVADO o TRAMITE_REMITIDO (solo lectura) }
+        '422': { description: VALIDACION / MOTIVO_RESTITUCION_REQUERIDO }
+        '401': { description: Sin sesión o sesión expirada }
+        '403': { description: PERMISO_DENEGADO }

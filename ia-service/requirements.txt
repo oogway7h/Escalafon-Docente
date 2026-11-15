@@ -1,0 +1,8 @@
+fastapi==0.163.0
+uvicorn[standard]==0.54.0
+boto3==1.35.90
+ocrmypdf==16.7.0
+pytesseract==0.3.13
+pillow==13.0.0
+# ocrmypdf 16.7 usa Pdf.check(), que pikepdf 10 eliminó: sin fijar, pip instala la 10 y el OCR de PDF falla.
+pikepdf==9.5.2
