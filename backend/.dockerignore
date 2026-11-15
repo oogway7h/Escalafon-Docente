@@ -1,0 +1,5 @@
+.env
+.git.anidado
+tmp
+reporte-importacion.txt
+*.log

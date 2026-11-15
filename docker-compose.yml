@@ -1,16 +1,84 @@
+# Todo el sistema con un comando:   docker compose up -d --build
+# Entrada única: nginx en el puerto 80 -> web (/) y API (/api, la misma URL que usa la app móvil).
+# Solo para desarrollo suelto: `docker compose up -d redis mailpit` y correr backend/frontend a mano.
+#
+# Antes de la primera vez: copiar backend/.env.example, frontend/.env.example, ia-service/.env.example y
+# .env.example (raíz) a sus .env y completarlos. Las direcciones internas (Redis, ia-service, API) las fija este archivo.
+
 services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "${PUERTO_WEB:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+    networks: [red]
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        CSP_CONNECT_EXTRA: ${CSP_CONNECT_EXTRA:-}
+    env_file: ./frontend/.env
+    environment:
+      API_URL_INTERNA: http://backend:8080
+      # La cookie de sesión solo viaja por HTTPS si es "true"; con HTTP plano (sin TLS) el login no funcionaría.
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks: [red]
+
+  backend:
+    build: ./backend
+    env_file: ./backend/.env
+    environment:
+      APP_PUERTO: "8080"
+      APP_URL_FRONTEND: ${URL_PUBLICA:-http://localhost}
+      REDIS_URL: redis://redis:6379/0
+      IA_SERVICE_URL: http://ia-service:8000
+      PROXIES_CONFIABLES: 172.28.0.0/16 # la red de este compose: nginx y el servidor de Next
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [red]
+
   redis:
     image: redis:7
     ports:
       - "127.0.0.1:6379:6379" # solo esta máquina: Redis no lleva contraseña
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+    networks: [red]
 
   mailpit:
     image: axllent/mailpit
     ports:
       - "127.0.0.1:1025:1025"
       - "127.0.0.1:8025:8025"
+    restart: unless-stopped
+    networks: [red]
 
+  # OCR (Tesseract) y compresión de PDF para CU-15. Lee y escribe en S3 con las credenciales de ia-service/.env.
+  ia-service:
+    build: ./ia-service
+    env_file: ./ia-service/.env
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+    networks: [red]
+
+  # Solo para las pruebas de persistencia del backend: docker compose up -d postgres-test
   postgres-test:
+    profiles: ["test"]
     image: postgres:16
     environment:
       POSTGRES_USER: postgres
@@ -19,9 +87,8 @@ services:
     ports:
       - "127.0.0.1:5433:5432"
 
-  # OCR (Tesseract) y compresion de PDF para CU-15. Lee y escribe en S3 con las credenciales de ia-service/.env.
-  ia-service:
-    build: ./ia-service
-    env_file: ./ia-service/.env
-    ports:
-      - "127.0.0.1:8000:8000"
+networks:
+  red:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
