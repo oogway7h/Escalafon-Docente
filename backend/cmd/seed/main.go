@@ -188,33 +188,38 @@ func main() {
 	}
 	log.Println("categorías del escalafón cargadas")
 
-	// 4. Usuarios de prueba (uno por rol), contraseña fija para desarrollo local. No pasan por
-	// activación: quedan activos de inmediato. Uso exclusivo de entornos de desarrollo.
-	usuariosPrueba := []struct{ Correo, Nombres, Apellidos, Rol string }{
-		{"admin@ded.dev", "Admin", "Prueba", nombreDirector},
-		{"analista@ded.dev", "Analista", "Prueba", nombreAnalista},
-		{"archivo@ded.dev", "Archivo", "Prueba", nombreArchivo},
-		{"ventanilla@ded.dev", "Ventanilla", "Prueba", nombreVentanilla},
-	}
-	hasherPrueba := security.NewBcryptHasher()
-	hashPrueba, err := hasherPrueba.Hash("123123")
-	if err != nil {
-		log.Fatalf("no se pudo hashear la contraseña de prueba: %v", err)
-	}
-	for _, up := range usuariosPrueba {
-		var existente persistence.UsuarioModel
-		if err := db.Where("lower(correo) = lower(?)", up.Correo).First(&existente).Error; err == nil {
-			log.Printf("usuario de prueba %s ya existe: no se recrea", up.Correo)
-			continue
+	// 4. Usuarios de prueba (uno por rol) con una contraseña fija y pública (está en este archivo): SOLO en
+	// desarrollo. En cualquier otro entorno no se crean, porque serían cuentas abiertas a cualquiera (el
+	// Director con todos los permisos incluido). No pasan por activación: quedan activos de inmediato.
+	if cfg.AppEnv != "development" {
+		log.Printf("APP_ENV=%q: no se crean los usuarios de prueba", cfg.AppEnv)
+	} else {
+		usuariosPrueba := []struct{ Correo, Nombres, Apellidos, Rol string }{
+			{"admin@ded.dev", "Admin", "Prueba", nombreDirector},
+			{"analista@ded.dev", "Analista", "Prueba", nombreAnalista},
+			{"archivo@ded.dev", "Archivo", "Prueba", nombreArchivo},
+			{"ventanilla@ded.dev", "Ventanilla", "Prueba", nombreVentanilla},
 		}
-		u := persistence.UsuarioModel{
-			RolID: roles[up.Rol].ID, Nombres: up.Nombres, Apellidos: up.Apellidos,
-			Correo: up.Correo, HashContrasena: hashPrueba, VersionSesion: 1, Activo: true,
+		hasherPrueba := security.NewBcryptHasher()
+		hashPrueba, err := hasherPrueba.Hash("123123")
+		if err != nil {
+			log.Fatalf("no se pudo hashear la contraseña de prueba: %v", err)
 		}
-		if err := db.Create(&u).Error; err != nil {
-			log.Fatalf("no se pudo crear el usuario de prueba %s: %v", up.Correo, err)
+		for _, up := range usuariosPrueba {
+			var existente persistence.UsuarioModel
+			if err := db.Where("lower(correo) = lower(?)", up.Correo).First(&existente).Error; err == nil {
+				log.Printf("usuario de prueba %s ya existe: no se recrea", up.Correo)
+				continue
+			}
+			u := persistence.UsuarioModel{
+				RolID: roles[up.Rol].ID, Nombres: up.Nombres, Apellidos: up.Apellidos,
+				Correo: up.Correo, HashContrasena: hashPrueba, VersionSesion: 1, Activo: true,
+			}
+			if err := db.Create(&u).Error; err != nil {
+				log.Fatalf("no se pudo crear el usuario de prueba %s: %v", up.Correo, err)
+			}
+			log.Printf("usuario de prueba creado: %-20s rol=%s", up.Correo, up.Rol)
 		}
-		log.Printf("usuario de prueba creado: %-20s rol=%s", up.Correo, up.Rol)
 	}
 
 	// 5. Primer Director, con contraseña aleatoria inutilizable y token de activación.

@@ -37,6 +37,7 @@ services:
     build: ./backend
     env_file: ./backend/.env
     environment:
+      APP_ENV: production # en producción el seed no crea los usuarios de prueba (contraseña pública 123123)
       APP_PUERTO: "8080"
       APP_URL_FRONTEND: ${URL_PUBLICA:-http://localhost}
       REDIS_URL: redis://redis:6379/0
