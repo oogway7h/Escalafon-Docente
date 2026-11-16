@@ -6,10 +6,11 @@ type LoginEntrada struct {
 }
 
 type LoginSalida struct {
-	Token    string         `json:"token"`
-	ExpiraEn int            `json:"expiraEn"`
-	Usuario  UsuarioResumen `json:"usuario"`
-	Permisos []string       `json:"permisos"`
+	Token             string         `json:"token"`
+	ExpiraEn          int            `json:"expiraEn"`
+	Usuario           UsuarioResumen `json:"usuario"`
+	Permisos          []string       `json:"permisos"`
+	TerminosAceptados bool           `json:"terminosAceptados"`
 }
 
 type UsuarioResumen struct {
@@ -30,7 +31,8 @@ type RestablecerEntrada struct {
 }
 
 type SesionSalida struct {
-	Usuario  UsuarioResumen `json:"usuario"`
-	Rol      string         `json:"rol"`
-	Permisos []string       `json:"permisos"`
+	Usuario           UsuarioResumen `json:"usuario"`
+	Rol               string         `json:"rol"`
+	Permisos          []string       `json:"permisos"`
+	TerminosAceptados bool           `json:"terminosAceptados"`
 }

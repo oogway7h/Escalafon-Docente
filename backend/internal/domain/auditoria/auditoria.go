@@ -47,6 +47,7 @@ const (
 	AccionDespacharCarpeta    = "DESPACHAR_CARPETA"
 	AccionDevolverCarpeta     = "DEVOLVER_CARPETA"
 	AccionGenerarReporte      = "GENERAR_REPORTE"
+	AccionAceptarTerminos     = "ACEPTAR_TERMINOS"
 
 	EntidadUsuario   = "usuario"
 	EntidadRol       = "rol"
@@ -68,7 +69,7 @@ var Acciones = []string{
 	AccionArchivar, AccionBajaDocumento, AccionRestituirDocumento, AccionSolicitarCarpeta, AccionAtenderSolicitud, AccionRechazarSolicitud,
 	AccionDespacharCarpeta, AccionDevolverCarpeta, AccionCargarDocumento, AccionCorregirTextoOCR,
 	AccionRegistrarPeriodo, AccionRemitirFacultad, AccionRegresoFacultad, AccionRemitirRectorado,
-	AccionGenerarReporte,
+	AccionGenerarReporte, AccionAceptarTerminos,
 }
 
 // AccionValida indica si la acción pertenece al catálogo.

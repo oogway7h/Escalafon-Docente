@@ -18,6 +18,7 @@ type AuthHandler struct {
 	Autenticar              *auth.AutenticarUsuario
 	CerrarSesionCaso        *auth.CerrarSesion
 	ObtenerSesionCaso       *auth.ObtenerSesion
+	AceptarTerminosCaso     *auth.AceptarTerminos
 	SolicitarRecuperacion   *auth.SolicitarRecuperacion
 	RestablecerRecuperacion *auth.RestablecerContrasena // PropositoEsperado = RECUPERACION
 	RestablecerActivacion   *auth.RestablecerContrasena // PropositoEsperado = ACTIVACION
@@ -39,7 +40,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		return apierror.Mapear(err)
 	}
 	return c.JSON(dto.LoginSalida{
-		Token: salida.Token, ExpiraEn: salida.ExpiraEn, Permisos: salida.Permisos,
+		Token: salida.Token, ExpiraEn: salida.ExpiraEn, Permisos: salida.Permisos, TerminosAceptados: salida.TerminosAceptados,
 		Usuario: dto.UsuarioResumen{
 			ID: salida.Usuario.ID, Nombres: salida.Usuario.Nombres, Apellidos: salida.Usuario.Apellidos,
 			Correo: salida.Usuario.Correo, RolID: salida.Usuario.RolID,
@@ -95,6 +96,15 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusNoContent)
 }
 
+// Terminos: POST /api/auth/terminos. El usuario autenticado acepta la versión vigente del acuerdo de usuario.
+func (h *AuthHandler) Terminos(c *fiber.Ctx) error {
+	id, _ := middleware.DeContexto(c)
+	if err := h.AceptarTerminosCaso.Ejecutar(c.Context(), id.UsuarioID, c.IP()); err != nil {
+		return apierror.Mapear(err)
+	}
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
 func (h *AuthHandler) Sesion(c *fiber.Ctx) error {
 	id, _ := middleware.DeContexto(c)
 	permisos := make([]string, 0, len(id.Permisos))
@@ -107,7 +117,7 @@ func (h *AuthHandler) Sesion(c *fiber.Ctx) error {
 		return apierror.Mapear(err)
 	}
 	return c.JSON(dto.SesionSalida{
-		Rol: salida.Rol, Permisos: salida.Permisos,
+		Rol: salida.Rol, Permisos: salida.Permisos, TerminosAceptados: salida.TerminosAceptados,
 		Usuario: dto.UsuarioResumen{
 			ID: salida.Usuario.ID, Nombres: salida.Usuario.Nombres, Apellidos: salida.Usuario.Apellidos,
 			Correo: salida.Usuario.Correo, RolID: salida.Usuario.RolID,

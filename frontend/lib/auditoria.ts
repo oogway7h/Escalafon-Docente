@@ -35,6 +35,7 @@ export const ETIQUETA_ACCION: Record<string, string> = {
   DESPACHAR_CARPETA: "Despachar carpeta",
   DEVOLVER_CARPETA: "Recibir devolución de carpeta",
   GENERAR_REPORTE: "Generar reporte",
+  ACEPTAR_TERMINOS: "Aceptar acuerdo de usuario",
 };
 
 export function etiquetaAccion(codigo: string): string {

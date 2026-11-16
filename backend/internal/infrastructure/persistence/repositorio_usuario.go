@@ -22,6 +22,7 @@ func aDominioUsuario(m *UsuarioModel) *usuario.Usuario {
 		Telefono: m.Telefono, HashContrasena: m.HashContrasena, IntentosFallidos: m.IntentosFallidos,
 		BloqueadoHasta: m.BloqueadoHasta, VersionSesion: m.VersionSesion, Activo: m.Activo,
 		UltimoAcceso: m.UltimoAcceso, CreadoEn: m.CreadoEn, ActualizadoEn: m.ActualizadoEn,
+		TerminosVersion: m.TerminosVersion, TerminosAceptadosEn: m.TerminosAceptadosEn,
 	}
 }
 
@@ -31,6 +32,7 @@ func aModeloUsuario(u *usuario.Usuario) *UsuarioModel {
 		Telefono: u.Telefono, HashContrasena: u.HashContrasena, IntentosFallidos: u.IntentosFallidos,
 		BloqueadoHasta: u.BloqueadoHasta, VersionSesion: u.VersionSesion, Activo: u.Activo,
 		UltimoAcceso: u.UltimoAcceso, CreadoEn: u.CreadoEn, ActualizadoEn: u.ActualizadoEn,
+		TerminosVersion: u.TerminosVersion, TerminosAceptadosEn: u.TerminosAceptadosEn,
 	}
 }
 
@@ -116,7 +118,7 @@ func (r *RepositorioUsuario) Actualizar(ctx context.Context, u *usuario.Usuario)
 		"rol_id": m.RolID, "nombres": m.Nombres, "apellidos": m.Apellidos, "correo": m.Correo,
 		"telefono": m.Telefono, "hash_contrasena": m.HashContrasena, "intentos_fallidos": m.IntentosFallidos,
 		"bloqueado_hasta": m.BloqueadoHasta, "version_sesion": m.VersionSesion, "activo": m.Activo,
-		"ultimo_acceso": m.UltimoAcceso,
+		"ultimo_acceso": m.UltimoAcceso, "terminos_version": m.TerminosVersion, "terminos_aceptados_en": m.TerminosAceptadosEn,
 	}).Error; err != nil {
 		if esViolacionUnicidad(err) {
 			return usuario.ErrCorreoDuplicado

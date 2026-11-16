@@ -23,7 +23,16 @@ type Usuario struct {
 	UltimoAcceso     *time.Time
 	CreadoEn         time.Time
 	ActualizadoEn    time.Time
+	// Acuerdo de usuario: versión aceptada (0 = nunca) y cuándo. Subir VersionTerminos lo vuelve a pedir a todos.
+	TerminosVersion     int16
+	TerminosAceptadosEn *time.Time
 }
+
+// VersionTerminos es la versión vigente del acuerdo de usuario (el texto vive en el frontend: lib/terminos.ts).
+const VersionTerminos int16 = 1
+
+// AceptoTerminos indica si el usuario aceptó la versión vigente del acuerdo.
+func (u *Usuario) AceptoTerminos() bool { return u.TerminosVersion >= VersionTerminos }
 
 // EstaBloqueado indica si, en el instante ahora, el usuario tiene un bloqueo vigente.
 func (u *Usuario) EstaBloqueado(ahora time.Time) bool {

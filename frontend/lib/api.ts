@@ -69,6 +69,7 @@ export type Sesion = {
   usuario: UsuarioResumen;
   rol: string;
   permisos: string[];
+  terminosAceptados: boolean; // false: se muestra el acuerdo de usuario antes del panel
 };
 
 // cache() deduplica la llamada dentro de la misma petición: el layout del panel y cada página

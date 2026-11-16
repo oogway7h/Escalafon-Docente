@@ -116,6 +116,7 @@ Todos bajo `/api`. Los de sesión usan el JWT; las lecturas compartidas usan `Re
 | Grupo | Rutas | Permiso |
 |---|---|---|
 | Autenticación (con límite de 10 peticiones/min por IP) | `POST /auth/login`, `/auth/recuperacion`, `/auth/restablecer`, `/auth/activar`; con sesión: `POST /auth/logout`, `GET /auth/sesion` | públicas / sesión |
+| Acuerdo de usuario | `POST /auth/terminos` (sesión): registra que el usuario aceptó la versión vigente (`usuario.VersionTerminos`; columnas `terminos_version` y `terminos_aceptados_en`) y audita `ACEPTAR_TERMINOS`. `POST /auth/login` y `GET /auth/sesion` devuelven `terminosAceptados`; el frontend muestra el acuerdo antes del panel mientras sea `false`. Subir la versión lo vuelve a pedir a todos | sesión |
 | Perfil | `GET/PUT /perfil`, `PUT /perfil/contrasena` | `PERFIL_GESTIONAR` |
 | Usuarios | `GET/POST /usuarios`, `GET/PUT /usuarios/:id`, `PATCH /usuarios/:id/rol`, `PATCH /usuarios/:id/estado`, `POST /usuarios/:id/reenviar-activacion` | `USUARIO_GESTIONAR` |
 | Roles | `GET /permisos`, `GET/POST /roles`, `GET/PUT/DELETE /roles/:id` | `ROL_GESTIONAR` |

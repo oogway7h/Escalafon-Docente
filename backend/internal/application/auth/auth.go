@@ -60,6 +60,8 @@ type AutenticarSalida struct {
 	ExpiraEn int
 	Usuario  UsuarioResumen
 	Permisos []string
+	// TerminosAceptados: false obliga a mostrar el acuerdo de usuario antes de entrar al panel.
+	TerminosAceptados bool
 }
 
 func (c *AutenticarUsuario) Ejecutar(ctx context.Context, in AutenticarEntrada) (*AutenticarSalida, error) {
@@ -133,7 +135,8 @@ func (c *AutenticarUsuario) Ejecutar(ctx context.Context, in AutenticarEntrada) 
 		Usuario: UsuarioResumen{
 			ID: u.ID, Nombres: u.Nombres, Apellidos: u.Apellidos, Correo: u.Correo, RolID: u.RolID,
 		},
-		Permisos: permisos,
+		Permisos:          permisos,
+		TerminosAceptados: u.AceptoTerminos(),
 	}, nil
 }
 
@@ -169,9 +172,10 @@ type ObtenerSesion struct {
 }
 
 type ObtenerSesionSalida struct {
-	Usuario  UsuarioResumen
-	Rol      string
-	Permisos []string
+	Usuario           UsuarioResumen
+	Rol               string
+	Permisos          []string
+	TerminosAceptados bool
 }
 
 func (c *ObtenerSesion) Ejecutar(ctx context.Context, usuarioID string, permisos []string) (*ObtenerSesionSalida, error) {
@@ -184,10 +188,38 @@ func (c *ObtenerSesion) Ejecutar(ctx context.Context, usuarioID string, permisos
 		return nil, err
 	}
 	return &ObtenerSesionSalida{
-		Usuario:  UsuarioResumen{ID: u.ID, Nombres: u.Nombres, Apellidos: u.Apellidos, Correo: u.Correo, RolID: u.RolID},
-		Rol:      r.Nombre,
-		Permisos: permisos,
+		Usuario:           UsuarioResumen{ID: u.ID, Nombres: u.Nombres, Apellidos: u.Apellidos, Correo: u.Correo, RolID: u.RolID},
+		Rol:               r.Nombre,
+		Permisos:          permisos,
+		TerminosAceptados: u.AceptoTerminos(),
 	}, nil
+}
+
+// AceptarTerminos registra que el usuario aceptó la versión vigente del acuerdo de usuario.
+type AceptarTerminos struct {
+	Usuarios  usuario.Repository
+	Auditoria auditoria.Repository
+	Reloj     ports.Clock
+}
+
+func (c *AceptarTerminos) Ejecutar(ctx context.Context, usuarioID, ip string) error {
+	u, err := c.Usuarios.BuscarPorID(ctx, usuarioID)
+	if err != nil {
+		return err
+	}
+	if u.AceptoTerminos() {
+		return nil
+	}
+	ahora := c.Reloj.Ahora()
+	u.TerminosVersion, u.TerminosAceptadosEn = usuario.VersionTerminos, &ahora
+	if err := c.Usuarios.Actualizar(ctx, u); err != nil {
+		return err
+	}
+	_ = c.Auditoria.Registrar(ctx, &auditoria.Evento{
+		UsuarioID: &u.ID, Accion: auditoria.AccionAceptarTerminos, Entidad: auditoria.EntidadUsuario,
+		EntidadID: u.ID, Detalle: map[string]any{"version": usuario.VersionTerminos}, DireccionIP: ip, Fecha: ahora,
+	})
+	return nil
 }
 
 // SolicitarRecuperacion crea un token de un solo uso y envía el enlace por correo.

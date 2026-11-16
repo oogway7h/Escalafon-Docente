@@ -252,3 +252,26 @@ func TestAutenticarUsuario_BloqueadaConClaveIncorrectaNoRevelaElBloqueo(t *testi
 		t.Fatalf("esperaba ErrCredencialesInvalidas, obtuve %v", err)
 	}
 }
+
+func TestAceptarTerminos_RegistraVersionYSoloAuditaLaPrimeraVez(t *testing.T) {
+	reloj := &testdobles.RelojFijo{Momento: time.Now()}
+	usuarios := testdobles.NewUsuarioRepoFalso()
+	auditoriaRepo := &testdobles.AuditoriaRepoFalso{}
+	u := usuarios.Sembrar(usuario.Usuario{Correo: "ana@uagrm.edu.bo", HashContrasena: "hash:clave", Activo: true, RolID: 1})
+	if u.AceptoTerminos() {
+		t.Fatal("un usuario nuevo no ha aceptado el acuerdo")
+	}
+	caso := &auth.AceptarTerminos{Usuarios: usuarios, Auditoria: auditoriaRepo, Reloj: reloj}
+	for i := 0; i < 2; i++ {
+		if err := caso.Ejecutar(context.Background(), u.ID, "10.0.0.1"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	actual, _ := usuarios.BuscarPorID(context.Background(), u.ID)
+	if !actual.AceptoTerminos() || actual.TerminosAceptadosEn == nil {
+		t.Fatalf("debió quedar aceptado: %+v", actual)
+	}
+	if len(auditoriaRepo.Eventos) != 1 || auditoriaRepo.Eventos[0].Accion != "ACEPTAR_TERMINOS" {
+		t.Fatalf("esperaba un único evento ACEPTAR_TERMINOS: %+v", auditoriaRepo.Eventos)
+	}
+}

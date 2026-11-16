@@ -100,6 +100,7 @@ func main() {
 	}
 	cerrarSesionCaso := &auth.CerrarSesion{Cache: sessionCache}
 	obtenerSesionCaso := &auth.ObtenerSesion{Usuarios: usuarioRepo, Roles: rolRepo}
+	aceptarTerminosCaso := &auth.AceptarTerminos{Usuarios: usuarioRepo, Auditoria: auditoria, Reloj: reloj}
 	solicitarRecuperacionCaso := &auth.SolicitarRecuperacion{
 		Usuarios: usuarioRepo, Tokens: tokenRepo, Generador: generador, Mailer: mailer, Reloj: reloj,
 		MinutosVigencia: cfg.MinutosTokenRecuperacion, URLFrontend: cfg.URLFrontend, Asincrono: true,
@@ -120,7 +121,7 @@ func main() {
 	}
 
 	authHandler := &handlers.AuthHandler{
-		Autenticar: autenticarCaso, CerrarSesionCaso: cerrarSesionCaso, ObtenerSesionCaso: obtenerSesionCaso,
+		Autenticar: autenticarCaso, CerrarSesionCaso: cerrarSesionCaso, ObtenerSesionCaso: obtenerSesionCaso, AceptarTerminosCaso: aceptarTerminosCaso,
 		SolicitarRecuperacion: solicitarRecuperacionCaso, RestablecerRecuperacion: restablecerRecuperacionCaso,
 		RestablecerActivacion: restablecerActivacionCaso,
 	}

@@ -60,6 +60,7 @@ func Registrar(app *fiber.App, d Dependencias) {
 	// 7.2 Sesión y perfil (requiere autenticación).
 	autGrupo.Post("/logout", autenticar, d.Auth.Logout)
 	autGrupo.Get("/sesion", autenticar, d.Auth.Sesion)
+	autGrupo.Post("/terminos", autenticar, d.Auth.Terminos)
 
 	perfilGrupo := api.Group("/perfil", autenticar, middleware.RequierePermiso(rol.PermisoPerfilGestionar))
 	perfilGrupo.Get("/", d.Perfil.Obtener)
