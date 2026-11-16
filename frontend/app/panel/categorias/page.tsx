@@ -36,7 +36,7 @@ export default async function CategoriasPage({ searchParams }: { searchParams: P
           pie="Dar de baja oculta la categoría al radicar pero la conserva. Eliminar la borra de la base de datos y solo es posible si ningún docente ni trámite la usa."
           columnas={[
             { titulo: "Categoría", celda: (c) => <span className="font-semibold">{c.nombre}</span> },
-            { titulo: "Antigüedad", celda: (c) => `${c.aniosAntiguedad} años` },
+            { titulo: "Puntaje", celda: (c) => (c.puntajeDesde === null ? "—" : c.puntajeHasta === null ? `${c.puntajeDesde} o más` : `${c.puntajeDesde} a ${c.puntajeHasta}`) },
             {
               titulo: "Documentos exigidos",
               celda: (c) => <span className="text-sm text-ink-soft">{c.requisitos.map((r) => r.nombre).join(" · ") || "—"}</span>,

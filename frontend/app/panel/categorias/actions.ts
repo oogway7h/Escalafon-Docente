@@ -15,6 +15,8 @@ export async function guardarCategoriaAction(
   const analisis = categoriaEsquema.safeParse({
     nombre: formData.get("nombre"),
     aniosAntiguedad: formData.get("aniosAntiguedad"),
+    puntajeDesde: formData.get("puntajeDesde"),
+    puntajeHasta: formData.get("puntajeHasta"),
     // Un requisito por línea.
     requisitos: String(formData.get("requisitos") ?? "")
       .split("\n")

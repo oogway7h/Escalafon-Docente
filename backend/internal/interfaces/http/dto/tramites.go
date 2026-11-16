@@ -60,6 +60,8 @@ type CategoriaDTO struct {
 	ID              int16          `json:"id"`
 	Nombre          string         `json:"nombre"`
 	AniosAntiguedad int16          `json:"aniosAntiguedad"`
+	PuntajeDesde    *int16         `json:"puntajeDesde"`
+	PuntajeHasta    *int16         `json:"puntajeHasta"`
 	Activa          bool           `json:"activa"`
 	Requisitos      []RequisitoDTO `json:"requisitos"`
 	Docentes        int64          `json:"docentes"`
@@ -69,6 +71,8 @@ type CategoriaDTO struct {
 type GuardarCategoriaEntrada struct {
 	Nombre          string   `json:"nombre" validate:"required"`
 	AniosAntiguedad int16    `json:"aniosAntiguedad" validate:"min=0"`
+	PuntajeDesde    *int16   `json:"puntajeDesde" validate:"omitempty,min=0"`
+	PuntajeHasta    *int16   `json:"puntajeHasta" validate:"omitempty,min=0"`
 	Requisitos      []string `json:"requisitos"`
 }
 

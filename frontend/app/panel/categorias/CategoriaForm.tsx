@@ -41,6 +41,15 @@ export default function CategoriaForm({
           </Campo>
         </div>
 
+        <div className="flex gap-4">
+          <Campo id="puntajeDesde" etiqueta="Puntaje desde" ayuda="Puntos de categoría (art. 18)." error={errores?.puntajeDesde} className="flex-1">
+            <input id="puntajeDesde" name="puntajeDesde" type="number" min={0} defaultValue={categoria?.puntajeDesde ?? ""} className={claseControl()} />
+          </Campo>
+          <Campo id="puntajeHasta" etiqueta="Puntaje hasta" ayuda="Vacío = «o más». Sin puntaje, no sale en las tarjetas del portal." error={errores?.puntajeHasta} className="flex-1">
+            <input id="puntajeHasta" name="puntajeHasta" type="number" min={0} defaultValue={categoria?.puntajeHasta ?? ""} className={claseControl()} />
+          </Campo>
+        </div>
+
         <Campo
           id="requisitos"
           etiqueta="Documentos probatorios exigidos"

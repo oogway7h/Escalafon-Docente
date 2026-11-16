@@ -5,6 +5,7 @@ import EscalatorMark from "@/components/common/EscalatorMark";
 import ModuloIcon from "@/components/common/ModuloIcon";
 import CategoriasRequisitos from "@/components/publico/CategoriasRequisitos";
 import { listarCategoriasPublicas } from "@/lib/api-tramites";
+import { ANTIGUEDAD_REGULARIZACION, PUNTOS_AUTORIDAD } from "@/lib/requisitos";
 import logoDed from "@/public/logo-ded.png";
 
 const modulos = [
@@ -55,7 +56,7 @@ const modulos = [
 export default async function LandingPage() {
   // Categorías vigentes con sus documentos exigidos (las administra el Director). Si la API no responde, la sección se omite.
   const categorias = await listarCategoriasPublicas()
-    .then((lista) => [...lista].sort((a, b) => a.aniosAntiguedad - b.aniosAntiguedad || a.nombre.localeCompare(b.nombre)))
+    .then((lista) => [...lista].sort((a, b) => (a.puntajeDesde ?? 0) - (b.puntajeDesde ?? 0) || a.nombre.localeCompare(b.nombre)))
     .catch(() => []);
 
   return (
@@ -132,14 +133,33 @@ export default async function LandingPage() {
           <div className="mx-auto flex max-w-6xl flex-col gap-10">
             <div className="fade-scroll flex flex-col gap-3">
               <h2 className="font-display text-[26px] font-extrabold tracking-[-0.01em] text-ink text-balance">
-                ¿Qué documentos necesito para mi categoría?
+                ¿Qué documentos necesito para mi trámite?
               </h2>
               <p className="max-w-2xl text-[15px] leading-relaxed text-ink-soft">
-                Cada categoría del escalafón exige una antigüedad y documentos propios. Pasa el cursor por la tarjeta de tu categoría o tócala para ver la lista completa; al tocarla queda fija hasta que la vuelvas a tocar.
+                La categorización pide los mismos documentos para todas las categorías: lo que cambia es el puntaje que alcanzas. La regularización tiene su propia lista. Pasa el cursor por una tarjeta o tócala para ver los documentos; al tocarla queda fija hasta que la vuelvas a tocar. Toda la documentación se presenta en dos ejemplares, con sus originales para la autenticación.
               </p>
             </div>
             <div className="fade-scroll">
               <CategoriasRequisitos categorias={categorias} />
+            </div>
+            <div className="fade-scroll grid gap-6 rounded-[22px] border border-line bg-surface p-7 md:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <h3 className="font-display text-[18px] font-extrabold text-ink">Docentes en función de autoridad</h3>
+                <p className="text-[14.5px] leading-relaxed text-ink-soft">
+                  Se consideran de tiempo completo los docentes que ejercen una autoridad. Por cada año de gestión suman puntos de categoría extra, según el cargo:
+                </p>
+              </div>
+              <ul className="flex flex-col divide-y divide-line">
+                {PUNTOS_AUTORIDAD.map((a) => (
+                  <li key={a.cargo} className="flex items-center justify-between gap-4 py-2.5 text-[14.5px]">
+                    <span className="font-semibold text-ink">{a.cargo}</span>
+                    <span className="shrink-0 font-mono font-medium text-accent-ink">{a.puntos} puntos por año</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-[13px] text-ink-faint md:col-span-2">
+                Regularización: es para el docente interino que acredita {ANTIGUEDAD_REGULARIZACION}. Consultas al Departamento de Escalafón Docente: teléfono 3393212.
+              </p>
             </div>
           </div>
         </section>

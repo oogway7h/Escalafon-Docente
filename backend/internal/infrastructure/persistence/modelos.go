@@ -52,6 +52,9 @@ type UsuarioModel struct {
 	UltimoAcceso     *time.Time
 	CreadoEn         time.Time `gorm:"not null;default:now()"`
 	ActualizadoEn    time.Time `gorm:"not null;default:now()"`
+	// Acuerdo de usuario aceptado (versión y fecha).
+	TerminosVersion     int16      `gorm:"column:terminos_version;not null;default:0"`
+	TerminosAceptadosEn *time.Time `gorm:"column:terminos_aceptados_en"`
 
 	Rol RolModel `gorm:"foreignKey:RolID;references:ID;constraint:OnDelete:RESTRICT"`
 }
@@ -94,6 +97,8 @@ type CategoriaModel struct {
 	ID              int16     `gorm:"primaryKey"`
 	Nombre          string    `gorm:"type:varchar(60);not null;unique"`
 	AniosAntiguedad int16     `gorm:"column:anios_antiguedad;not null;default:0;check:chk_categoria_anios,anios_antiguedad >= 0"`
+	PuntajeDesde    *int16    `gorm:"column:puntaje_desde"`
+	PuntajeHasta    *int16    `gorm:"column:puntaje_hasta"`
 	Activa          bool      `gorm:"not null;default:true"`
 	CreadoEn        time.Time `gorm:"not null;default:now()"`
 }
@@ -157,7 +162,7 @@ type TramiteModel struct {
 	CreadoEn            time.Time  `gorm:"not null;default:now()"`
 	ActualizadoEn       time.Time  `gorm:"not null;default:now()"`
 
-	Docente   DocenteModel   `gorm:"foreignKey:DocenteID;references:ID;constraint:OnDelete:RESTRICT"`
+	Docente   DocenteModel    `gorm:"foreignKey:DocenteID;references:ID;constraint:OnDelete:RESTRICT"`
 	Categoria *CategoriaModel `gorm:"foreignKey:CategoriaID;references:ID;constraint:OnDelete:RESTRICT"`
 	Analista  *UsuarioModel   `gorm:"foreignKey:AnalistaID;references:ID;constraint:OnDelete:RESTRICT"`
 }

@@ -130,11 +130,22 @@ func main() {
 		log.Fatalf("no se pudo retirar TRAMITE_RADICAR al Analista: %v", err)
 	}
 
-	// 3b. Categorías del escalafón con sus documentos exigidos (idempotente). Se reconocen por
-	// clave normalizada, así "Titular A" y "Profesor Titular A" son la misma. Los años de
-	// antigüedad y los requisitos son valores de ejemplo: se ajustan desde el panel.
-	// Los docentes reales se cargan con `make import-docentes`.
-	requisitosBase := []string{"Cédula de identidad", "Título profesional", "Certificado de antigüedad", "Resolución rectoral"}
+	// 3b. Categorías del escalafón con sus puntajes y documentos exigidos (idempotente). Se reconocen por
+	// clave normalizada, así "Titular A" y "Profesor Titular A" son la misma. Los puntajes son los del art. 18
+	// del Reglamento del Escalafón y los documentos son los de "Requisitos para categorización docente" del
+	// Departamento: son los mismos para todas las categorías (solo cambia el puntaje). Cada ejecución deja
+	// exactamente esa lista (quita los documentos que ya no se exigen). Los docentes reales se cargan con
+	// `make import-docentes`.
+	requisitosCategorizacion := []string{
+		"Carta «Solicitud de categorización» al Jefe del Dpto. de Escalafón Docente, con la facultad",
+		"Certificado de Trabajo original de RR.HH. – UAGRM, actualizado, con facultad y carrera",
+		"Dos fotos 4x4 (cualquier fondo)",
+		"Hoja de vida (sin respaldo)",
+		"Fotocopia simple de la cédula de identidad",
+		"Fotocopia legalizada de títulos (académico, provisión nacional, diplomado, maestría)",
+		"Certificado de evaluación de desempeño docente (D.E.A.) de las gestiones a evaluar",
+		"Méritos: cursos, libros, textos guía, publicaciones y proyectos visados por Decano o Director",
+	}
 	var existentes []persistence.CategoriaModel
 	if err := db.Find(&existentes).Error; err != nil {
 		log.Fatalf("no se pudieron leer las categorías: %v", err)
@@ -143,21 +154,32 @@ func main() {
 	for _, c := range existentes {
 		porClave[persistence.ClaveCategoria(c.Nombre)] = c
 	}
+	p := func(v int16) *int16 { return &v }
 	for _, c := range []struct {
-		Nombre string
-		Anios  int16
+		Nombre       string
+		Desde, Hasta *int16 // nil = sin puntaje; Hasta nil con Desde = "o más"
 	}{
-		{"Profesor Adjunto", 2}, {"Profesor Asociado", 5}, {"Profesor Titular A", 8}, {"Profesor Titular B", 12},
-		{"Profesor Titular C", 16}, {"Profesor Emérito", 25}, {"Profesor Interino", 0},
+		{"Profesor Adjunto", p(30), p(89)}, {"Profesor Asociado", p(90), p(149)}, {"Profesor Titular A", p(150), p(299)},
+		{"Profesor Titular B", p(300), p(449)}, {"Profesor Titular C", p(450), nil},
+		{"Profesor Emérito", nil, nil}, {"Profesor Interino", nil, nil},
 	} {
 		cat, ok := porClave[persistence.ClaveCategoria(c.Nombre)]
 		if !ok {
-			cat = persistence.CategoriaModel{Nombre: c.Nombre, AniosAntiguedad: c.Anios, Activa: true}
+			cat = persistence.CategoriaModel{Nombre: c.Nombre, Activa: true}
 			if err := db.Create(&cat).Error; err != nil {
 				log.Fatalf("no se pudo crear la categoría %s: %v", c.Nombre, err)
 			}
 		}
-		for _, n := range requisitosBase {
+		// La antigüedad ya no es un dato de la categoría: cada docente tiene las gestiones que le corresponde evaluar.
+		if err := db.Model(&persistence.CategoriaModel{}).Where("id = ?", cat.ID).
+			Updates(map[string]any{"anios_antiguedad": 0, "puntaje_desde": c.Desde, "puntaje_hasta": c.Hasta}).Error; err != nil {
+			log.Fatalf("no se pudo actualizar el puntaje de %s: %v", c.Nombre, err)
+		}
+		if err := db.Where("categoria_id = ? AND nombre NOT IN ?", cat.ID, requisitosCategorizacion).
+			Delete(&persistence.CategoriaRequisitoModel{}).Error; err != nil {
+			log.Fatalf("no se pudieron retirar los requisitos antiguos de %s: %v", c.Nombre, err)
+		}
+		for _, n := range requisitosCategorizacion {
 			rq := persistence.CategoriaRequisitoModel{CategoriaID: cat.ID, Nombre: n}
 			if err := db.Where(rq).FirstOrCreate(&rq).Error; err != nil {
 				log.Fatalf("no se pudo crear el requisito %s: %v", n, err)

@@ -18,7 +18,7 @@ func NewRepositorioCategoria(dbase *gorm.DB) *RepositorioCategoria {
 }
 
 func aDominioCategoria(m *CategoriaModel, reqs []CategoriaRequisitoModel) categoria.Categoria {
-	c := categoria.Categoria{ID: m.ID, Nombre: m.Nombre, AniosAntiguedad: m.AniosAntiguedad, Activa: m.Activa}
+	c := categoria.Categoria{ID: m.ID, Nombre: m.Nombre, AniosAntiguedad: m.AniosAntiguedad, PuntajeDesde: m.PuntajeDesde, PuntajeHasta: m.PuntajeHasta, Activa: m.Activa}
 	for _, r := range reqs {
 		c.Requisitos = append(c.Requisitos, categoria.Requisito{ID: r.ID, Nombre: r.Nombre})
 	}
@@ -113,7 +113,7 @@ func (r *RepositorioCategoria) BuscarPorID(ctx context.Context, id int16) (*cate
 
 func (r *RepositorioCategoria) Guardar(ctx context.Context, c *categoria.Categoria, requisitos []string) error {
 	return db(ctx, r.DB).Transaction(func(tx *gorm.DB) error {
-		m := CategoriaModel{ID: c.ID, Nombre: c.Nombre, AniosAntiguedad: c.AniosAntiguedad, Activa: c.Activa}
+		m := CategoriaModel{ID: c.ID, Nombre: c.Nombre, AniosAntiguedad: c.AniosAntiguedad, PuntajeDesde: c.PuntajeDesde, PuntajeHasta: c.PuntajeHasta, Activa: c.Activa}
 		if c.ID == 0 {
 			if err := tx.Create(&m).Error; err != nil {
 				if esViolacionUnicidad(err) {
@@ -124,7 +124,7 @@ func (r *RepositorioCategoria) Guardar(ctx context.Context, c *categoria.Categor
 			c.ID = m.ID
 		} else {
 			res := tx.Model(&CategoriaModel{}).Where("id = ?", c.ID).
-				Updates(map[string]any{"nombre": c.Nombre, "anios_antiguedad": c.AniosAntiguedad})
+				Updates(map[string]any{"nombre": c.Nombre, "anios_antiguedad": c.AniosAntiguedad, "puntaje_desde": c.PuntajeDesde, "puntaje_hasta": c.PuntajeHasta})
 			if res.Error != nil {
 				if esViolacionUnicidad(res.Error) {
 					return categoria.ErrDuplicada

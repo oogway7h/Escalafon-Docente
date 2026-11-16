@@ -1,4 +1,4 @@
-h1:uu8YTZD8FHIig4WK0FCu+TwRAYJZBu6s4WPdoMgB+lA=
+h1:jOf65sbKyuK+nKhvxvm/S1dU7P224PIzC02FJM4t2lU=
 20260922003347_inicial.sql h1:QlZNpJVY32MEPJOpiFpEqAs2XU1uBIoFfeajiYVZurY=
 20260922003354_ajustes_manuales.sql h1:mWaIy/KtzQ4Ev2c5JINhU0/1fFL5U+f4Ohm37UAHLhw=
 20261005021952_tramites.sql h1:yzr+ORfHgif755sXqjS64CKw6Gd0q1A0FrA2f1TkddY=
@@ -14,3 +14,5 @@ h1:uu8YTZD8FHIig4WK0FCu+TwRAYJZBu6s4WPdoMgB+lA=
 20261021120000_quitar_evidencia_custodia.sql h1:pMHBcVDcMVnjI45bLwtkORHp/AnYtz3zZyzlRPHcByM=
 20261022100000_expediente_digital_docente.sql h1:aNZvqhZEL3Q+szVSUpOi5fgxhraWNK4vtnWO/Y02pAc=
 20261114100000_tramite_categoria_opcional.sql h1:hWjb138gGs6I80x2yf4GywQLFkgzJEOC10xeJ7zEFVA=
+20261115120000_categoria_puntaje.sql h1:uBEAKtn92xlhQ/RAdUiGBTJz9+ndZ+TJLUUYAqhY1ZA=
+20261115120100_usuario_terminos.sql h1:rb9pBUdTjVyVTr1BohKkpSFyMa/PVAvq/ukYpWIsnIk=

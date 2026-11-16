@@ -80,6 +80,9 @@ export const docenteEsquema = z.object({
 export const categoriaEsquema = z.object({
   nombre: z.string().min(1, "Ingresa el nombre"),
   aniosAntiguedad: z.coerce.number().int().min(0, "Debe ser 0 o más"),
+  // Vacío = sin puntaje (no aparece en las tarjetas del portal).
+  puntajeDesde: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.coerce.number().int().min(0, "Debe ser 0 o más").optional()),
+  puntajeHasta: z.preprocess((v) => (v === "" || v == null ? undefined : v), z.coerce.number().int().min(0, "Debe ser 0 o más").optional()),
   requisitos: z.array(z.string()),
 });
 

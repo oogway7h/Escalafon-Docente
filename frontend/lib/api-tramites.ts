@@ -11,6 +11,8 @@ export type Categoria = {
   id: number;
   nombre: string;
   aniosAntiguedad: number;
+  puntajeDesde: number | null; // rango de puntos de categoría (art. 18 del Reglamento); null = sin puntaje
+  puntajeHasta: number | null; // null con puntajeDesde = «o más»
   activa: boolean;
   requisitos: Requisito[];
   docentes: number; // docentes con esta categoría

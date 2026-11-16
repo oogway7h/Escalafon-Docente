@@ -28,6 +28,8 @@ type Entrada struct {
 	ID              int16 // 0 = crear
 	Nombre          string
 	AniosAntiguedad int16
+	PuntajeDesde    *int16
+	PuntajeHasta    *int16
 	Requisitos      []string
 }
 
@@ -48,7 +50,7 @@ func (c *Guardar) Ejecutar(ctx context.Context, in Entrada) (*categoria.Categori
 			reqs = append(reqs, r)
 		}
 	}
-	cat := &categoria.Categoria{ID: in.ID, Nombre: strings.TrimSpace(in.Nombre), AniosAntiguedad: in.AniosAntiguedad, Activa: true}
+	cat := &categoria.Categoria{ID: in.ID, Nombre: strings.TrimSpace(in.Nombre), AniosAntiguedad: in.AniosAntiguedad, PuntajeDesde: in.PuntajeDesde, PuntajeHasta: in.PuntajeHasta, Activa: true}
 	if err := c.Categorias.Guardar(ctx, cat, reqs); err != nil {
 		return nil, err
 	}

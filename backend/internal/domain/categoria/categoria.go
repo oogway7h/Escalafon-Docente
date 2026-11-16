@@ -27,6 +27,9 @@ type Categoria struct {
 	ID              int16
 	Nombre          string
 	AniosAntiguedad int16
+	// Rango de puntos de categoría (Reglamento del Escalafón, art. 18); nil = la categoría no se define por puntaje.
+	// PuntajeHasta nil con PuntajeDesde definido significa «o más» (Titular C: 450 o más).
+	PuntajeDesde, PuntajeHasta *int16
 	Activa          bool
 	Requisitos      []Requisito
 	Docentes        int64 // docentes que la tienen como categoría actual

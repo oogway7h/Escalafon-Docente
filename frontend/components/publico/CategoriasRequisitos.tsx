@@ -2,23 +2,53 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { REQUISITOS_REGULARIZACION, textoPuntaje } from "@/lib/requisitos";
 
-type CategoriaInfo = { id: number; nombre: string; aniosAntiguedad: number; requisitos: { id: number; nombre: string }[] };
+type CategoriaInfo = {
+  id: number;
+  nombre: string;
+  puntajeDesde: number | null;
+  puntajeHasta: number | null;
+  requisitos: { id: number; nombre: string }[];
+};
+
+// La regularización no es una categoría del catálogo: es un trámite aparte con su propia lista de documentos.
+const REGULARIZACION: CategoriaInfo = {
+  id: -1,
+  nombre: "Regularización docente",
+  puntajeDesde: null,
+  puntajeHasta: null,
+  requisitos: REQUISITOS_REGULARIZACION.map((nombre, i) => ({ id: -(i + 1), nombre })),
+};
 
 // Tarjetas de dos caras: con ratón giran al pasar el cursor; al tocar o hacer clic se BLOQUEAN giradas
 // (en móvil el toque es el único gesto) y otro clic las devuelve. Los datos son los del catálogo que
 // administra el Director.
 export default function CategoriasRequisitos({ categorias }: { categorias: CategoriaInfo[] }) {
+  // Solo las categorías con puntaje (Adjunto a Titular C): son las que se alcanzan por categorización.
+  const conPuntaje = categorias.filter((c) => c.puntajeDesde !== null);
   return (
     <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
-      {categorias.map((c, i) => (
-        <CartaCategoria key={c.id} categoria={c} indice={i} total={categorias.length} />
+      {conPuntaje.map((c, i) => (
+        <CartaCategoria key={c.id} categoria={c} indice={i} total={conPuntaje.length} />
       ))}
+      <CartaCategoria categoria={REGULARIZACION} indice={conPuntaje.length} total={conPuntaje.length} regularizacion />
     </div>
   );
 }
 
-function CartaCategoria({ categoria: c, indice, total }: { categoria: CategoriaInfo; indice: number; total: number }) {
+function CartaCategoria({
+  categoria: c,
+  indice,
+  total,
+  regularizacion = false,
+}: {
+  categoria: CategoriaInfo;
+  indice: number;
+  total: number;
+  regularizacion?: boolean;
+}) {
+  const puntaje = textoPuntaje(c.puntajeDesde, c.puntajeHasta);
   const [bloqueada, setBloqueada] = useState(false);
   const [encima, setEncima] = useState(false);
   const volteada = bloqueada || encima;
@@ -59,10 +89,10 @@ function CartaCategoria({ categoria: c, indice, total }: { categoria: CategoriaI
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
               <span className="text-[11.5px] font-bold uppercase tracking-[0.12em] text-ink-faint">
-                Categoría {indice + 1} de {total}
+                {regularizacion ? "Trámite aparte" : `Categoría ${indice + 1} de ${total}`}
               </span>
               <div className="flex h-[26px] items-end gap-1" aria-hidden="true">
-                {Array.from({ length: total }, (_, k) => (
+                {Array.from({ length: regularizacion ? 0 : total }, (_, k) => (
                   <span
                     key={k}
                     className={`block w-2 rounded-[3px] transition-transform duration-500 ${k <= indice ? "bg-accent" : "bg-line"} ${encima ? "scale-y-110" : ""}`}
@@ -74,18 +104,25 @@ function CartaCategoria({ categoria: c, indice, total }: { categoria: CategoriaI
             <h3 className="font-display text-[28px] font-extrabold leading-[1.1] tracking-[-0.02em] text-ink">{c.nombre}</h3>
           </div>
 
-          {c.aniosAntiguedad > 0 ? (
+          {regularizacion ? (
             <div className="flex items-baseline gap-2.5">
-              <span className="font-mono text-[84px] font-medium leading-[0.9] tracking-[-0.04em] text-accent-ink">{c.aniosAntiguedad}</span>
+              <span className="font-mono text-[84px] font-medium leading-[0.9] tracking-[-0.04em] text-accent-ink">2</span>
               <span className="text-[15px] font-semibold leading-snug text-ink-soft">
-                años de
+                años o 4 semestres
                 <br />
-                antigüedad mínima
+                sin cortes en la materia
               </span>
             </div>
-          ) : (
-            <p className="text-[18px] font-bold leading-snug text-ink-soft">Sin antigüedad mínima</p>
-          )}
+          ) : puntaje ? (
+            <div className="flex items-baseline gap-2.5">
+              <span className="font-mono text-[56px] font-medium leading-[0.95] tracking-[-0.04em] text-accent-ink">{puntaje}</span>
+              <span className="text-[15px] font-semibold leading-snug text-ink-soft">
+                puntos de
+                <br />
+                categoría
+              </span>
+            </div>
+          ) : null}
 
           <div className="flex items-center justify-between gap-3">
             <span className="rounded-full bg-bg px-3.5 py-2 text-[13.5px] font-bold text-ink">

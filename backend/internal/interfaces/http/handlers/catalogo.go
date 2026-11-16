@@ -33,7 +33,7 @@ func aCategoriaDTO(c categoria.Categoria) dto.CategoriaDTO {
 		reqs[i] = dto.RequisitoDTO{ID: r.ID, Nombre: r.Nombre}
 	}
 	return dto.CategoriaDTO{
-		ID: c.ID, Nombre: c.Nombre, AniosAntiguedad: c.AniosAntiguedad, Activa: c.Activa, Requisitos: reqs,
+		ID: c.ID, Nombre: c.Nombre, AniosAntiguedad: c.AniosAntiguedad, PuntajeDesde: c.PuntajeDesde, PuntajeHasta: c.PuntajeHasta, Activa: c.Activa, Requisitos: reqs,
 		Docentes: c.Docentes, Tramites: c.Tramites,
 	}
 }
@@ -234,7 +234,7 @@ func (h *CategoriasHandler) Guardar(c *fiber.Ctx) error {
 	}
 	actor, _ := middleware.DeContexto(c)
 	cat, err := h.CasoGuardar.Ejecutar(c.Context(), categorias.Entrada{
-		ActorID: actor.UsuarioID, ID: id, Nombre: in.Nombre, AniosAntiguedad: in.AniosAntiguedad, Requisitos: in.Requisitos,
+		ActorID: actor.UsuarioID, ID: id, Nombre: in.Nombre, AniosAntiguedad: in.AniosAntiguedad, PuntajeDesde: in.PuntajeDesde, PuntajeHasta: in.PuntajeHasta, Requisitos: in.Requisitos,
 	})
 	if err != nil {
 		return apierror.Mapear(err)

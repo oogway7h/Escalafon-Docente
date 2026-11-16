@@ -7,6 +7,7 @@ import Campo, { claseControl } from "@/components/common/Campo";
 import ZonaArchivo from "@/components/common/ZonaArchivo";
 import type { Categoria } from "@/lib/api-tramites";
 import type { EstadoFormulario } from "@/lib/formularios";
+import { REQUISITOS_REGULARIZACION, textoPuntaje } from "@/lib/requisitos";
 import { LIMITE_MB, MAX_ADJUNTOS_LIBRES } from "@/lib/tramites";
 import { radicarPublicoAction } from "./actions";
 
@@ -65,7 +66,7 @@ export default function SolicitudForm({ categorias }: { categorias: Categoria[] 
         <fieldset key={categoria.id} className="animate-materializar flex flex-col gap-4 rounded-[16px] border border-line p-5">
           <legend className="px-2 text-[13px] font-bold text-ink">Documentos para {categoria.nombre}</legend>
           <p className="-mt-1 text-xs text-ink-faint">
-            {categoria.aniosAntiguedad > 0 && `Antigüedad mínima: ${categoria.aniosAntiguedad} años. `}
+            {textoPuntaje(categoria.puntajeDesde, categoria.puntajeHasta) && `Puntaje de categoría: ${textoPuntaje(categoria.puntajeDesde, categoria.puntajeHasta)} puntos. `}
             Todos son obligatorios.
           </p>
           {categoria.requisitos.map((r) => (
@@ -77,7 +78,23 @@ export default function SolicitudForm({ categorias }: { categorias: Categoria[] 
       )}
 
       {!esCategorizacion && (
-        <Campo id="adjunto" etiqueta="Documentos de respaldo" ayuda="Adjunta lo que sustenta tu regularización." error={errores?.adjunto}>
+        <div className="animate-materializar flex flex-col gap-2 rounded-[16px] border border-line p-5">
+          <p className="text-[13px] font-bold text-ink">Documentos que exige la regularización</p>
+          <ul className="flex list-disc flex-col gap-1 pl-5 text-xs leading-snug text-ink-soft">
+            {REQUISITOS_REGULARIZACION.map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!esCategorizacion && (
+        <Campo
+          id="adjunto"
+          etiqueta="Documentos de respaldo"
+          ayuda={`Hasta ${MAX_ADJUNTOS_LIBRES} archivos: si tienes más documentos, júntalos en un mismo PDF.`}
+          error={errores?.adjunto}
+        >
           <ZonaArchivo id="adjunto" name="adjunto" maxMB={LIMITE_MB.portal} maxArchivos={MAX_ADJUNTOS_LIBRES} required />
         </Campo>
       )}
