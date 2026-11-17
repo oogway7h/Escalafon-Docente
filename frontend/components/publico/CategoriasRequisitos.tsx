@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { REQUISITOS_REGULARIZACION, textoPuntaje } from "@/lib/requisitos";
 
 type CategoriaInfo = {
@@ -25,7 +25,7 @@ const REGULARIZACION: CategoriaInfo = {
 // (en móvil el toque es el único gesto) y otro clic las devuelve. Los datos son los del catálogo que
 // administra el Director.
 export default function CategoriasRequisitos({ categorias }: { categorias: CategoriaInfo[] }) {
-  // Solo las categorías con puntaje (Adjunto a Titular C): son las que se alcanzan por categorización.
+  // Solo las categorías con puntaje (Adjunto a Emérito): son las que se alcanzan por categorización.
   const conPuntaje = categorias.filter((c) => c.puntajeDesde !== null);
   return (
     <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
@@ -49,34 +49,26 @@ function CartaCategoria({
   regularizacion?: boolean;
 }) {
   const puntaje = textoPuntaje(c.puntajeDesde, c.puntajeHasta);
-  const [bloqueada, setBloqueada] = useState(false);
   const [encima, setEncima] = useState(false);
-  const volteada = bloqueada || encima;
-  const verRef = useRef<HTMLButtonElement>(null);
-  const cerrarRef = useRef<HTMLButtonElement>(null);
-  const primera = useRef(true);
+  const volteada = encima;
+  const dialogo = useRef<HTMLDialogElement>(null);
+  const idTitulo = `requisitos-${c.id}`;
 
-  // Al bloquear o desbloquear con el teclado el botón pulsado queda inerte (cambia de cara): el foco pasa al de la otra cara.
-  useEffect(() => {
-    if (primera.current) {
-      primera.current = false;
-      return;
-    }
-    (bloqueada ? cerrarRef : verRef).current?.focus({ preventScroll: true });
-  }, [bloqueada]);
-
-  const alternar = (e: React.MouseEvent) => {
+  // Con ratón la tarjeta gira al pasar el cursor; al hacer clic (o tocar, en móvil) se abre el modal con la lista.
+  const abrir = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("a")) return; // el enlace de la cara trasera navega
-    setBloqueada((b) => !b);
-    setEncima(false); // si el cursor sigue encima, no se vuelve a girar hasta que salga y vuelva a entrar
+    setEncima(false);
+    dialogo.current?.showModal();
   };
+  const cerrar = () => dialogo.current?.close();
 
   return (
+    <>
     <div
-      onClick={alternar}
+      onClick={abrir}
       onPointerEnter={(e) => e.pointerType === "mouse" && setEncima(true)}
       onPointerLeave={(e) => e.pointerType === "mouse" && setEncima(false)}
-      className={`h-[400px] cursor-pointer transition-transform duration-300 [perspective:1400px] motion-reduce:transition-none ${volteada && !bloqueada ? "-translate-y-1" : ""}`}
+      className={`h-[400px] cursor-pointer transition-transform duration-300 [perspective:1400px] motion-reduce:transition-none ${volteada ? "-translate-y-1" : ""}`}
     >
       <div
         className={`relative h-full w-full transition-transform duration-700 ease-[cubic-bezier(.2,.8,.2,1)] [transform-style:preserve-3d] motion-reduce:transition-none ${volteada ? "[transform:rotateY(180deg)]" : ""}`}
@@ -129,9 +121,8 @@ function CartaCategoria({
               {c.requisitos.length} {c.requisitos.length === 1 ? "documento" : "documentos"}
             </span>
             <button
-              ref={verRef}
               type="button"
-              aria-pressed={bloqueada}
+              aria-haspopup="dialog"
               aria-label={`Ver los requisitos de ${c.nombre}`}
               className="inline-flex min-h-11 items-center gap-2 rounded-[10px] border-[1.5px] border-line bg-surface px-4 text-[14px] font-bold text-ink transition-colors hover:border-accent hover:text-accent-ink"
             >
@@ -152,16 +143,7 @@ function CartaCategoria({
               <p className="text-[11.5px] font-bold uppercase tracking-[0.12em] text-white/60">Documentos exigidos</p>
               <h3 className="mt-1.5 font-display text-[22px] font-extrabold leading-tight">{c.nombre}</h3>
             </div>
-            <button
-              ref={cerrarRef}
-              type="button"
-              aria-label={`Volver a la tarjeta de ${c.nombre}`}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border-[1.5px] border-white/25 text-white transition-colors hover:bg-white hover:text-[#14213d]"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-              </svg>
-            </button>
+            <span className="shrink-0 rounded-full border border-white/25 px-3 py-1.5 text-[12px] font-bold text-white/80">Clic para ampliar</span>
           </div>
 
           {c.requisitos.length === 0 ? (
@@ -190,6 +172,57 @@ function CartaCategoria({
         </div>
       </div>
     </div>
+
+      <dialog
+        ref={dialogo}
+        onClick={(e) => e.target === e.currentTarget && cerrar()} // clic en el fondo oscuro
+        aria-labelledby={idTitulo}
+        className="m-auto max-h-[calc(100vh-32px)] w-[min(640px,calc(100vw-32px))] rounded-2xl border border-line bg-surface p-0 text-ink backdrop:bg-black/30 backdrop:backdrop-blur-sm"
+      >
+        <div className="flex max-h-[calc(100vh-32px)] flex-col gap-5 p-6 sm:p-8">
+          <header className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[11.5px] font-bold uppercase tracking-[0.12em] text-ink-faint">Documentos exigidos</p>
+              <h2 id={idTitulo} className="mt-1 font-display text-2xl font-extrabold tracking-[-0.01em]">
+                {c.nombre}
+              </h2>
+              {puntaje && <p className="mt-1 text-sm font-semibold text-accent-ink">{puntaje} puntos de categoría</p>}
+            </div>
+            <button
+              type="button"
+              onClick={cerrar}
+              aria-label="Cerrar"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-line text-ink-soft hover:border-accent hover:text-accent-ink"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </header>
+
+          {c.requisitos.length === 0 ? (
+            <p className="text-sm text-ink-soft">Esta categoría no exige documentos.</p>
+          ) : (
+            <ol className="flex min-h-0 flex-col gap-3 overflow-y-auto pr-1">
+              {c.requisitos.map((r, k) => (
+                <li key={r.id} className="flex items-start gap-3 text-[15px] leading-snug">
+                  <span className="mt-px flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-soft text-[12px] font-bold text-accent-dark">{k + 1}</span>
+                  {r.nombre}
+                </li>
+              ))}
+            </ol>
+          )}
+
+          <Link
+            href="/solicitud"
+            className="inline-flex min-h-11 w-fit items-center rounded-lg bg-accent px-5 text-[14.5px] font-bold text-white transition-[transform,background] duration-100 hover:bg-accent-dark active:scale-[0.975]"
+          >
+            Iniciar mi solicitud
+          </Link>
+        </div>
+      </dialog>
+    </>
   );
 }
 

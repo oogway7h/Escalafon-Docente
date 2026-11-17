@@ -16,6 +16,7 @@ export default function BotonEnviar({
   name,
   value,
   sinLoader = false,
+  deshabilitado = false,
 }: {
   children: React.ReactNode;
   textoEnviando?: string;
@@ -25,6 +26,7 @@ export default function BotonEnviar({
   name?: string;
   value?: string;
   sinLoader?: boolean;
+  deshabilitado?: boolean;
 }) {
   const { pending, data } = useFormStatus();
   const pulsado = pending && (name === undefined || data?.get(name) === value);
@@ -33,7 +35,7 @@ export default function BotonEnviar({
       type="submit"
       name={name}
       value={value}
-      disabled={pending}
+      disabled={pending || deshabilitado}
       cargando={pulsado && !sinLoader}
       variante={variante}
       tamano={tamano}

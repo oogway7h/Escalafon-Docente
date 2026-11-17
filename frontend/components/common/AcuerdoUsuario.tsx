@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import BotonEnviar from "@/components/common/BotonEnviar";
+import { claseBoton } from "@/components/common/Boton";
 import { cerrarSesion } from "@/app/panel/actions";
 import { aceptarTerminos } from "@/app/panel/terminos";
 import { DESARROLLADOR, FECHA_TERMINOS, SECCIONES_TERMINOS, VERSION_TERMINOS } from "@/lib/terminos";
@@ -52,7 +53,7 @@ export default function AcuerdoUsuario({ nombre }: { nombre: string }) {
             He leído el acuerdo de usuario, lo entiendo y me comprometo a cumplirlo.
           </label>
           <div className="flex flex-wrap items-center gap-3">
-            <BotonEnviar variante="primario" tamano="md" textoEnviando="Guardando…">
+            <BotonEnviar variante="primario" tamano="md" textoEnviando="Guardando…" deshabilitado={!acepto} clase={`${claseBoton("primario", "md")} disabled:cursor-not-allowed! disabled:opacity-40!`}>
               Aceptar y continuar
             </BotonEnviar>
             <button

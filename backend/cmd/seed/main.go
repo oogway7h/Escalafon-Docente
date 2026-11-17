@@ -160,8 +160,8 @@ func main() {
 		Desde, Hasta *int16 // nil = sin puntaje; Hasta nil con Desde = "o más"
 	}{
 		{"Profesor Adjunto", p(30), p(89)}, {"Profesor Asociado", p(90), p(149)}, {"Profesor Titular A", p(150), p(299)},
-		{"Profesor Titular B", p(300), p(449)}, {"Profesor Titular C", p(450), nil},
-		{"Profesor Emérito", nil, nil}, {"Profesor Interino", nil, nil},
+		{"Profesor Titular B", p(300), p(449)}, {"Profesor Titular C", p(450), p(800)},
+		{"Profesor Emérito", p(801), nil}, {"Profesor Interino", nil, nil},
 	} {
 		cat, ok := porClave[persistence.ClaveCategoria(c.Nombre)]
 		if !ok {
@@ -199,6 +199,7 @@ func main() {
 			{"analista@ded.dev", "Analista", "Prueba", nombreAnalista},
 			{"archivo@ded.dev", "Archivo", "Prueba", nombreArchivo},
 			{"ventanilla@ded.dev", "Ventanilla", "Prueba", nombreVentanilla},
+			{"nuevo@ded.dev", "Nuevo", "Prueba", nombreAnalista},
 		}
 		hasherPrueba := security.NewBcryptHasher()
 		hashPrueba, err := hasherPrueba.Hash("123123")
