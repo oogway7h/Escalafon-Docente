@@ -75,6 +75,8 @@ type ObjectStorage interface {
 	URLSubida(ctx context.Context, clave, tipoMime string, vigencia time.Duration) (string, error)
 	// Tamano devuelve el tamaño en bytes del objeto, o un error si no existe.
 	Tamano(ctx context.Context, clave string) (int64, error)
+	// Eliminar borra el objeto; no falla si no existe.
+	Eliminar(ctx context.Context, clave string) error
 }
 
 // SolicitudProceso pide al servicio de IA que extraiga el texto (OCR) y comprima un objeto del almacén.

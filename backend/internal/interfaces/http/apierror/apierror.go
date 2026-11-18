@@ -102,6 +102,12 @@ func Mapear(err error) *ErrorAPI {
 		return Nuevo(422, "CONTRASENA_ACTUAL_INCORRECTA", "La contraseña actual es incorrecta")
 	case errors.Is(err, usuario.ErrCampoNoEditable):
 		return Nuevo(403, "CAMPO_NO_EDITABLE", "Ese campo no se puede editar desde aquí")
+	case errors.Is(err, usuario.ErrFotoNoEncontrada):
+		return Nuevo(404, "FOTO_NO_ENCONTRADA", "No tienes foto de perfil")
+	case errors.Is(err, usuario.ErrFotoInvalida):
+		return Nuevo(422, "FOTO_INVALIDA", "La foto debe ser una imagen JPG o PNG válida")
+	case errors.Is(err, usuario.ErrFotoGrande):
+		return Nuevo(413, "FOTO_GRANDE", "La foto no puede superar los 2 MB")
 
 	case errors.Is(err, auditoria.ErrAccionInvalida):
 		return Nuevo(422, "ACCION_INVALIDA", "El tipo de acción no existe")

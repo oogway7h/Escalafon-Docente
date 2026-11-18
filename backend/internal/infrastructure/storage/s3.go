@@ -70,6 +70,11 @@ func (s *S3) Tamano(ctx context.Context, clave string) (int64, error) {
 	return aws.ToInt64(r.ContentLength), nil
 }
 
+func (s *S3) Eliminar(ctx context.Context, clave string) error {
+	_, err := s.cliente.DeleteObject(ctx, &s3.DeleteObjectInput{Bucket: &s.bucket, Key: &clave})
+	return err
+}
+
 // NoConfigurado se usa cuando no hay variables S3: la API arranca, pero subir o descargar
 // adjuntos responde 503.
 type NoConfigurado struct{}
@@ -84,6 +89,7 @@ func (NoConfigurado) URLFirmada(context.Context, string, time.Duration) (string,
 func (NoConfigurado) URLSubida(context.Context, string, string, time.Duration) (string, error) {
 	return "", tramite.ErrAlmacenNoDisponible
 }
+func (NoConfigurado) Eliminar(context.Context, string) error { return tramite.ErrAlmacenNoDisponible }
 func (NoConfigurado) Tamano(context.Context, string) (int64, error) {
 	return 0, tramite.ErrAlmacenNoDisponible
 }

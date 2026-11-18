@@ -1,4 +1,4 @@
-h1:jOf65sbKyuK+nKhvxvm/S1dU7P224PIzC02FJM4t2lU=
+h1:bFSPiTul2gdush20mwIEmpAvKIGo54KH1LS8dpAbEp4=
 20260922003347_inicial.sql h1:QlZNpJVY32MEPJOpiFpEqAs2XU1uBIoFfeajiYVZurY=
 20260922003354_ajustes_manuales.sql h1:mWaIy/KtzQ4Ev2c5JINhU0/1fFL5U+f4Ohm37UAHLhw=
 20261005021952_tramites.sql h1:yzr+ORfHgif755sXqjS64CKw6Gd0q1A0FrA2f1TkddY=
@@ -16,3 +16,4 @@ h1:jOf65sbKyuK+nKhvxvm/S1dU7P224PIzC02FJM4t2lU=
 20261114100000_tramite_categoria_opcional.sql h1:hWjb138gGs6I80x2yf4GywQLFkgzJEOC10xeJ7zEFVA=
 20261115120000_categoria_puntaje.sql h1:uBEAKtn92xlhQ/RAdUiGBTJz9+ndZ+TJLUUYAqhY1ZA=
 20261115120100_usuario_terminos.sql h1:rb9pBUdTjVyVTr1BohKkpSFyMa/PVAvq/ukYpWIsnIk=
+20261118120000_usuario_foto.sql h1:dj0TNbXeVtsHv2PWVYYReYwnZIaZg4bz6RIS1FQqa1Y=

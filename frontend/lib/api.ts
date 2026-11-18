@@ -176,3 +176,21 @@ export async function listarPermisos(): Promise<Permiso[]> {
   if (!respuesta.ok) throw new ApiError(respuesta.status, "ERROR_PERMISOS", "No se pudo cargar el catálogo de permisos");
   return respuesta.json();
 }
+
+// Versión de la foto de perfil del usuario (cambia con cada foto nueva), o null si no tiene o no se pudo saber.
+// Nunca lanza ni redirige: el panel debe abrir igual aunque la API o la migración de la foto fallen.
+export const obtenerVersionFoto = cache(async (): Promise<number | null> => {
+  try {
+    const apiUrl = process.env.API_URL_INTERNA;
+    const token = await leerTokenSesion();
+    if (!apiUrl || !token) return null;
+    const r = await fetch(`${apiUrl}/api/perfil/foto`, {
+      headers: { Authorization: `Bearer ${token}`, ...(await cabecerasCliente()) },
+      cache: "no-store",
+      signal: AbortSignal.timeout(3000),
+    });
+    return r.ok ? ((await r.json()) as { version: number }).version : null;
+  } catch {
+    return null;
+  }
+});

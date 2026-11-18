@@ -467,6 +467,11 @@ func (*AlmacenFalso) URLSubida(_ context.Context, clave, _ string, _ time.Durati
 	return "https://almacen.test/subir/" + clave, nil
 }
 
+func (a *AlmacenFalso) Eliminar(_ context.Context, clave string) error {
+	delete(a.Guardados, clave)
+	return nil
+}
+
 func (a *AlmacenFalso) Tamano(_ context.Context, clave string) (int64, error) {
 	d, ok := a.Guardados[clave]
 	if !ok {

@@ -61,6 +61,18 @@ type UsuarioModel struct {
 
 func (UsuarioModel) TableName() string { return "usuario" }
 
+// UsuarioFotoModel es la referencia a la foto de perfil (el archivo vive en el almacén de objetos).
+type UsuarioFotoModel struct {
+	UsuarioID     string    `gorm:"column:usuario_id;type:uuid;primaryKey"`
+	Clave         string    `gorm:"type:varchar(200);not null"`
+	TipoMime      string    `gorm:"column:tipo_mime;type:varchar(20);not null"`
+	ActualizadoEn time.Time `gorm:"column:actualizado_en;not null;default:now()"`
+
+	Usuario UsuarioModel `gorm:"foreignKey:UsuarioID;references:ID;constraint:OnDelete:CASCADE"`
+}
+
+func (UsuarioFotoModel) TableName() string { return "usuario_foto" }
+
 // TokenRecuperacionModel es la representación GORM de la tabla token_recuperacion.
 type TokenRecuperacionModel struct {
 	ID        string    `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`

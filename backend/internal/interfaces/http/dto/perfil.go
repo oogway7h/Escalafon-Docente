@@ -37,3 +37,11 @@ type CambiarContrasenaSalida struct {
 	Token    string `json:"token"`
 	ExpiraEn int    `json:"expiraEn"`
 }
+
+// FotoSalida es un enlace temporal de lectura a la foto de perfil. Version cambia con cada foto nueva.
+type FotoSalida struct {
+	URL              string `json:"url"`
+	TipoMime         string `json:"tipoMime"`
+	Version          int64  `json:"version"`
+	VigenciaSegundos int    `json:"vigenciaSegundos"`
+}

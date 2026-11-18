@@ -1,17 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import { cerrarSesion } from "@/app/panel/actions";
+import Avatar from "@/components/common/Avatar";
 import BotonTema from "@/components/common/BotonTema";
 import type { Sesion } from "@/lib/api";
 import { IconoColapsar, IconoMenuMovil, IconoSalir } from "./IconosPanel";
 
 export default function Header({
   sesion,
+  fotoVersion,
   colapsado,
   onAlternarColapso,
   onAbrirMovil,
 }: {
   sesion: Sesion;
+  fotoVersion: number | null;
   colapsado: boolean;
   onAlternarColapso: () => void;
   onAbrirMovil: () => void;
@@ -43,6 +47,9 @@ export default function Header({
 
       <div className="flex items-center gap-3">
         <BotonTema />
+        <Link href="/panel/perfil" aria-label="Mi perfil" className="flex rounded-full">
+          <Avatar nombres={sesion.usuario.nombres} apellidos={sesion.usuario.apellidos} version={fotoVersion} />
+        </Link>
         <form action={cerrarSesion}>
           <button
             type="submit"

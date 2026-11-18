@@ -19,7 +19,7 @@ function leerColapsadoGuardado() {
   }
 }
 
-export default function PanelShell({ sesion, children }: { sesion: Sesion; children: React.ReactNode }) {
+export default function PanelShell({ sesion, fotoVersion, children }: { sesion: Sesion; fotoVersion: number | null; children: React.ReactNode }) {
   // useSyncExternalStore evita el desajuste de hidratación: en el servidor usa el snapshot fijo
   // (false), en el cliente lee localStorage sin pasar por un efecto.
   const colapsadoGuardado = useSyncExternalStore(suscribirseSinCambios, leerColapsadoGuardado, () => false);
@@ -47,6 +47,7 @@ export default function PanelShell({ sesion, children }: { sesion: Sesion; child
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <Header
           sesion={sesion}
+          fotoVersion={fotoVersion}
           colapsado={colapsado}
           onAlternarColapso={alternarColapso}
           onAbrirMovil={() => setAbiertoMovil(true)}

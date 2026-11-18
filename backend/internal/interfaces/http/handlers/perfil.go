@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"io"
+
 	"github.com/gofiber/fiber/v2"
 
 	"escalafon/backend/internal/application/perfil"
+	"escalafon/backend/internal/domain/usuario"
 	"escalafon/backend/internal/interfaces/http/apierror"
 	"escalafon/backend/internal/interfaces/http/dto"
 	"escalafon/backend/internal/interfaces/http/middleware"
@@ -13,6 +16,9 @@ type PerfilHandler struct {
 	CasoObtener            *perfil.ObtenerPerfil
 	CasoActualizarContacto *perfil.ActualizarContacto
 	CasoCambiarContrasena  *perfil.CambiarContrasena
+	CasoObtenerFoto        *perfil.ObtenerFoto
+	CasoSubirFoto          *perfil.SubirFoto
+	CasoQuitarFoto         *perfil.QuitarFoto
 }
 
 func (h *PerfilHandler) Obtener(c *fiber.Ctx) error {
@@ -63,4 +69,49 @@ func (h *PerfilHandler) CambiarContrasena(c *fiber.Ctx) error {
 		return apierror.Mapear(err)
 	}
 	return c.JSON(dto.CambiarContrasenaSalida{Token: salida.Token, ExpiraEn: salida.ExpiraEn})
+}
+
+// ObtenerFoto devuelve un enlace firmado y temporal a la foto del usuario autenticado (404 si no tiene).
+func (h *PerfilHandler) ObtenerFoto(c *fiber.Ctx) error {
+	id, _ := middleware.DeContexto(c)
+	f, err := h.CasoObtenerFoto.Ejecutar(c.Context(), id.UsuarioID)
+	if err != nil {
+		return apierror.Mapear(err)
+	}
+	return c.JSON(dto.FotoSalida{URL: f.URL, TipoMime: f.TipoMime, Version: f.Version, VigenciaSegundos: f.VigenciaS})
+}
+
+// SubirFoto recibe la imagen como multipart (campo "foto"); el contenido se valida en el caso de uso.
+func (h *PerfilHandler) SubirFoto(c *fiber.Ctx) error {
+	cabecera, err := c.FormFile("foto")
+	if err != nil {
+		return apierror.Nuevo(400, "CUERPO_INVALIDO", "Envía la imagen en el campo «foto» de un formulario multipart")
+	}
+	if cabecera.Size > usuario.FotoMaxBytes {
+		return apierror.Mapear(usuario.ErrFotoGrande)
+	}
+	archivo, err := cabecera.Open()
+	if err != nil {
+		return apierror.Nuevo(400, "CUERPO_INVALIDO", "No se pudo leer la imagen")
+	}
+	defer archivo.Close()
+	datos, err := io.ReadAll(io.LimitReader(archivo, usuario.FotoMaxBytes+1))
+	if err != nil {
+		return apierror.Nuevo(400, "CUERPO_INVALIDO", "No se pudo leer la imagen")
+	}
+
+	id, _ := middleware.DeContexto(c)
+	f, err := h.CasoSubirFoto.Ejecutar(c.Context(), id.UsuarioID, datos)
+	if err != nil {
+		return apierror.Mapear(err)
+	}
+	return c.JSON(fiber.Map{"version": f.ActualizadoEn.Unix()})
+}
+
+func (h *PerfilHandler) QuitarFoto(c *fiber.Ctx) error {
+	id, _ := middleware.DeContexto(c)
+	if err := h.CasoQuitarFoto.Ejecutar(c.Context(), id.UsuarioID); err != nil {
+		return apierror.Mapear(err)
+	}
+	return c.SendStatus(204)
 }

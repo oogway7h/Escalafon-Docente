@@ -66,6 +66,9 @@ func Registrar(app *fiber.App, d Dependencias) {
 	perfilGrupo.Get("/", d.Perfil.Obtener)
 	perfilGrupo.Put("/", d.Perfil.ActualizarContacto)
 	perfilGrupo.Put("/contrasena", d.Perfil.CambiarContrasena)
+	perfilGrupo.Get("/foto", d.Perfil.ObtenerFoto)
+	perfilGrupo.Put("/foto", d.Perfil.SubirFoto)
+	perfilGrupo.Delete("/foto", d.Perfil.QuitarFoto)
 
 	// 7.3 Usuarios y 7.4 Roles (HU-02): registradas si los handlers están construidos.
 	if d.Usuarios != nil {

@@ -113,6 +113,7 @@ func main() {
 		Usuarios: usuarioRepo, Tokens: tokenRepo, Auditoria: auditoria, Hasher: hasher, Generador: generador,
 		Cache: sessionCache, Tx: tx, Reloj: reloj, PropositoEsperado: token.PropositoActivacion,
 	}
+	fotoRepo := persistence.NewRepositorioFoto(db)
 	obtenerPerfilCaso := &perfil.ObtenerPerfil{Usuarios: usuarioRepo}
 	actualizarContactoCaso := &perfil.ActualizarContacto{Usuarios: usuarioRepo, Auditoria: auditoria, Reloj: reloj}
 	cambiarContrasenaCaso := &perfil.CambiarContrasena{
@@ -127,6 +128,9 @@ func main() {
 	}
 	perfilHandler := &handlers.PerfilHandler{
 		CasoObtener: obtenerPerfilCaso, CasoActualizarContacto: actualizarContactoCaso, CasoCambiarContrasena: cambiarContrasenaCaso,
+		CasoObtenerFoto: &perfil.ObtenerFoto{Fotos: fotoRepo, Almacen: almacen},
+		CasoSubirFoto:   &perfil.SubirFoto{Fotos: fotoRepo, Almacen: almacen, Auditoria: auditoria, Reloj: reloj},
+		CasoQuitarFoto:  &perfil.QuitarFoto{Fotos: fotoRepo, Almacen: almacen, Auditoria: auditoria, Reloj: reloj},
 	}
 
 	// --- Casos de uso de HU-02 ---

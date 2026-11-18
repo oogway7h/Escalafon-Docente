@@ -17,6 +17,9 @@ const (
 	ErrPoliticaContrasena         erroDominio = "la contraseña no cumple la política mínima"
 	ErrContrasenaActualIncorrecta erroDominio = "la contraseña actual es incorrecta"
 	ErrCampoNoEditable            erroDominio = "ese campo no se puede editar desde aquí"
+	ErrFotoNoEncontrada           erroDominio = "el usuario no tiene foto de perfil"
+	ErrFotoInvalida               erroDominio = "la foto debe ser una imagen JPG o PNG válida"
+	ErrFotoGrande                 erroDominio = "la foto supera el tamaño máximo permitido"
 )
 
 // ErrCuentaBloqueada se devuelve cuando el bloqueo por intentos fallidos sigue vigente.

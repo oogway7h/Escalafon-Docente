@@ -652,3 +652,27 @@ func (r *NotificacionRepoFalso) Listar(_ context.Context, f notificacion.Filtro,
 	}
 	return out, int64(len(out)), nil
 }
+
+// --- usuario.FotoRepository ------------------------------------------------------------
+
+type FotoRepoFalso struct{ Fotos map[string]*usuario.Foto }
+
+func NewFotoRepoFalso() *FotoRepoFalso { return &FotoRepoFalso{Fotos: map[string]*usuario.Foto{}} }
+
+func (r *FotoRepoFalso) Obtener(_ context.Context, usuarioID string) (*usuario.Foto, error) {
+	f, ok := r.Fotos[usuarioID]
+	if !ok {
+		return nil, usuario.ErrFotoNoEncontrada
+	}
+	return f, nil
+}
+
+func (r *FotoRepoFalso) Guardar(_ context.Context, f *usuario.Foto) error {
+	r.Fotos[f.UsuarioID] = f
+	return nil
+}
+
+func (r *FotoRepoFalso) Eliminar(_ context.Context, usuarioID string) error {
+	delete(r.Fotos, usuarioID)
+	return nil
+}

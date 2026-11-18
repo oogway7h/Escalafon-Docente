@@ -179,3 +179,9 @@ Detalle en `impruves.md` (raíz del proyecto).
 
 - **Acuerdo de usuario:** `app/panel/layout.tsx` muestra `components/common/AcuerdoUsuario.tsx` (texto en `lib/terminos.ts`) en lugar del panel mientras `sesion.terminosAceptados` sea `false`; aceptar llama a `POST /api/auth/terminos` (`app/panel/terminos.ts`) y rechazar cierra la sesión. Al cambiar el texto hay que subir `VERSION_TERMINOS` aquí y `VersionTerminos` en el backend. El nombre del desarrollador y la fecha se cambian en `lib/terminos.ts` (`DESARROLLADOR`, `FECHA_TERMINOS`).
 - **Tarjetas del portal:** muestran el puntaje de categoría (art. 18 del Reglamento; `puntajeDesde`/`puntajeHasta` de la categoría, vacíos = sin puntaje y no sale la tarjeta) en vez de los años de antigüedad, más una tarjeta de Regularización y la tabla de puntos por función de autoridad (`lib/requisitos.ts`). Los documentos de la categorización son los mismos para todas las categorías y los carga `make seed`; el Director los puede ajustar en `/panel/categorias`.
+
+
+## Foto de perfil
+
+`/panel/perfil` rediseñada (foto, datos de contacto y contraseña). `app/panel/perfil/FotoPerfil.tsx` (arrastrar y soltar, vista previa con `blob:`, validación JPG/PNG ≤ 2 MB) usa las acciones `subirFoto`/`quitarFoto`. `GET /panel/perfil/foto` (route handler) entrega la imagen desde el mismo origen leyendo el enlace firmado de la API, porque la CSP solo permite `img-src 'self' data: blob:`; no pasa por `lib/archivo.ts` porque su caché en disco se indexa por la ruta del objeto y la foto reemplaza siempre la misma clave. `components/common/Avatar.tsx` muestra la foto o las iniciales y se usa en el encabezado del panel; `obtenerVersionFoto()` (`lib/api.ts`) **nunca lanza ni redirige**: si la API o la migración fallan, el panel abre con iniciales.
+
