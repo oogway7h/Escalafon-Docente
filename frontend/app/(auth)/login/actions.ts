@@ -38,7 +38,8 @@ export async function iniciarSesion(
   if (!respuesta.ok) return errorApi(respuesta, "No se pudo iniciar sesión.");
 
   const { token, expiraEn } = await respuesta.json();
-  await escribirTokenSesion(token, expiraEn);
+  // "Recordarme" desmarcado: cookie de sesión (se pierde al cerrar el navegador).
+  await escribirTokenSesion(token, formData.get("recordarme") ? expiraEn : undefined);
 
   redirect("/panel");
 }

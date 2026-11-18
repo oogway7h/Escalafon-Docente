@@ -8,7 +8,8 @@ export async function leerTokenSesion(): Promise<string | undefined> {
   return cookieStore.get(NOMBRE_COOKIE)?.value;
 }
 
-export async function escribirTokenSesion(token: string, maxAgeSegundos: number) {
+// Sin maxAgeSegundos la cookie es de sesión: el navegador la descarta al cerrarse.
+export async function escribirTokenSesion(token: string, maxAgeSegundos?: number) {
   const cookieStore = await cookies();
   cookieStore.set(NOMBRE_COOKIE, token, {
     httpOnly: true,
